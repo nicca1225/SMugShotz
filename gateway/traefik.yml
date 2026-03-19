@@ -1,0 +1,15 @@
+api:
+  dashboard: true
+  insecure: true  # dev only — remove in prod
+
+entryPoints:
+  web:
+    address: ":80"
+
+providers:
+  docker:
+    exposedByDefault: false
+    network: digicam-net
+
+log:
+  level: INFO

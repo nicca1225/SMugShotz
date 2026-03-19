@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DigiCam Exchange — Premium Camera Auctions</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #000000;
+      --surface: #0f0f0f;
+      --surface-2: #1a1a1a;
+      --accent: #e63946;
+      --text: #ffffff;
+      --muted: #6e6e73;
+      --border: #222222;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-weight: 400;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ─────────────────────────────────────────────────────── */
+    nav {
+      position: fixed;
+      top: 0;
+      z-index: 100;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid #1a1a1a;
+      height: 60px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      padding: 0 48px;
+    }
+
+    .nav-logo {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 20px;
+      color: var(--text);
+      text-decoration: none;
+      letter-spacing: 0.5px;
+    }
+    .nav-logo span { color: var(--accent); }
+
+    .nav-links {
+      display: flex;
+      gap: 40px;
+      align-items: center;
+    }
+    .nav-links a {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.25s ease;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-self: end;
+    }
+
+    .btn-ghost {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      padding: 8px 20px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+    }
+    .btn-ghost:hover { border-color: #555; }
+
+    .btn-primary {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      background: var(--accent);
+      border: none;
+      border-radius: 50px;
+      padding: 8px 20px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+    }
+    .btn-primary:hover {
+      background: #c82333;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(230, 57, 70, 0.35);
+    }
+
+    /* ── HERO ────────────────────────────────────────────────────── */
+    .hero {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      background: #000;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 30% 100% at 0% 50%, rgba(0,0,0,0.96), transparent),
+        radial-gradient(ellipse 30% 100% at 100% 50%, rgba(0,0,0,0.96), transparent);
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      position: absolute;
+      top: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 5;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 400;
+      padding: 7px 18px;
+      border-radius: 50px;
+      white-space: nowrap;
+      letter-spacing: 0.3px;
+    }
+
+    .hero-display {
+      position: relative;
+      z-index: 3;
+      text-align: center;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .hero-line {
+      display: block;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: clamp(96px, 16vw, 190px);
+      line-height: 0.88;
+      letter-spacing: -4px;
+      text-transform: uppercase;
+    }
+
+    .hero-line-solid { color: var(--text); }
+
+    .hero-line-outline {
+      -webkit-text-stroke: 3px rgba(255, 255, 255, 0.85);
+      color: transparent;
+    }
+
+    .hero-bottom {
+      position: absolute;
+      bottom: 48px;
+      left: 0;
+      right: 0;
+      padding: 0 64px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      z-index: 5;
+    }
+
+    .hero-tagline {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .hero-tagline span {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 300;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .hero-cta {
+      background: var(--accent);
+      color: var(--text);
+      padding: 14px 30px;
+      border-radius: 50px;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+      white-space: nowrap;
+    }
+    .hero-cta:hover {
+      background: #c82333;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(230, 57, 70, 0.4);
+    }
+
+    /* ── STATS BAR ───────────────────────────────────────────────── */
+    .stats-bar {
+      background: #0a0a0a;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+      padding: 24px 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      flex: 1;
+      position: relative;
+    }
+
+    .stat-item + .stat-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 10%;
+      height: 80%;
+      width: 1px;
+      background: var(--border);
+    }
+
+    .stat-num {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 28px;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    /* ── SECTION SHARED ──────────────────────────────────────────── */
+    .overline {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .section-heading {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: clamp(36px, 5vw, 52px);
+      color: var(--text);
+      text-transform: uppercase;
+      line-height: 1;
+      margin-bottom: 56px;
+    }
+
+    /* ── FEATURES ────────────────────────────────────────────────── */
+    .features { padding: 120px 64px; }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px 32px;
+      transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+      cursor: default;
+    }
+    .feature-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--accent);
+      box-shadow: 0 16px 48px rgba(230, 57, 70, 0.1);
+    }
+
+    .feature-icon {
+      font-size: 40px;
+      margin-bottom: 24px;
+      display: block;
+      line-height: 1;
+    }
+
+    .feature-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 20px;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .feature-body {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    /* ── HOW IT WORKS ────────────────────────────────────────────── */
+    .how {
+      background: #0a0a0a;
+      border-top: 1px solid #1a1a1a;
+      padding: 120px 64px;
+    }
+
+    .steps-row {
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .step {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .step-connector {
+      flex: 1;
+      height: 0;
+      border-top: 2px dashed #2a2a2a;
+      margin-top: 28px;
+      align-self: flex-start;
+    }
+
+    .step-circle {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 24px;
+      color: var(--text);
+      margin-bottom: 20px;
+      flex-shrink: 0;
+    }
+
+    .step-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    .step-desc {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 180px;
+    }
+
+    /* ── CTA SECTION ─────────────────────────────────────────────── */
+    .cta-section {
+      padding: 120px 64px;
+      text-align: center;
+    }
+
+    .cta-heading {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: clamp(48px, 7vw, 80px);
+      color: var(--text);
+      text-transform: uppercase;
+      line-height: 0.92;
+      letter-spacing: -2px;
+      margin-bottom: 24px;
+    }
+
+    .cta-sub {
+      font-family: 'Inter', sans-serif;
+      font-size: 17px;
+      color: var(--muted);
+      font-weight: 300;
+      margin-bottom: 40px;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.6;
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-cta-primary {
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      background: var(--accent);
+      border: none;
+      border-radius: 50px;
+      padding: 16px 36px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+    }
+    .btn-cta-primary:hover {
+      background: #c82333;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(230, 57, 70, 0.4);
+    }
+
+    .btn-cta-ghost {
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      padding: 16px 36px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+    }
+    .btn-cta-ghost:hover { border-color: #555; }
+
+    /* ── FOOTER ──────────────────────────────────────────────────── */
+    footer {
+      background: #0a0a0a;
+      border-top: 1px solid #1a1a1a;
+      padding: 80px 64px 0;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1.6fr 1fr 1fr 1fr;
+      gap: 48px;
+      padding-bottom: 64px;
+    }
+
+    .footer-brand-logo {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 20px;
+      color: var(--text);
+      text-decoration: none;
+      display: inline-block;
+      margin-bottom: 16px;
+    }
+    .footer-brand-logo span { color: var(--accent); }
+
+    .footer-brand-desc {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .footer-col-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .footer-links {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      list-style: none;
+    }
+    .footer-links a {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.25s ease;
+    }
+    .footer-links a:hover { color: var(--text); }
+
+    .footer-bottom {
+      border-top: 1px solid var(--border);
+      padding: 24px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-copyright,
+    .footer-tagline {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* ── RESPONSIVE ──────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      nav { padding: 0 24px; }
+      .nav-links { display: none; }
+
+      .hero-badge { font-size: 10px; top: 75px; white-space: normal; text-align: center; max-width: 280px; }
+
+      .hero-bottom {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 24px;
+        padding: 0 24px;
+        bottom: 36px;
+      }
+
+      .stats-bar {
+        padding: 20px 24px;
+        flex-wrap: wrap;
+        gap: 16px;
+        justify-content: center;
+      }
+      .stat-item + .stat-item::before { display: none; }
+      .stat-item { flex: 1 1 40%; }
+
+      .features, .cta-section { padding: 80px 24px; }
+      .how { padding: 80px 24px; }
+
+      .features-grid { grid-template-columns: 1fr; }
+
+      .steps-row {
+        flex-direction: column;
+        gap: 40px;
+        align-items: center;
+      }
+      .step-connector { display: none; }
+
+      .footer-grid { grid-template-columns: 1fr; gap: 40px; }
+      footer { padding: 60px 24px 0; }
+      .footer-bottom { flex-direction: column; gap: 8px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="index.html" class="nav-logo">DIGI<span>CAM</span></a>
+    <div class="nav-links">
+      <a href="buyer-ui/index.html">Auctions</a>
+      <a href="seller-ui/index.html">Sell</a>
+    </div>
+    <div class="nav-actions">
+      <a href="#" class="btn-ghost">Sign In</a>
+      <a href="buyer-ui/index.html" class="btn-primary">Get Started</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-badge">A New Era in Camera Trading &nbsp;|&nbsp; Overview</div>
+    <div class="hero-display">
+      <span class="hero-line hero-line-solid">DIGICAM</span>
+      <span class="hero-line hero-line-outline">EXCHANGE</span>
+    </div>
+    <div class="hero-bottom">
+      <div class="hero-tagline">
+        <span>Bringing unprecedented quality</span>
+        <span>to pre-owned camera trading</span>
+      </div>
+      <a href="buyer-ui/index.html" class="hero-cta">Browse Auctions →</a>
+    </div>
+  </section>
+
+  <!-- STATS BAR -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <span class="stat-num">12,400+</span>
+      <span class="stat-label">Cameras Sold</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num">98%</span>
+      <span class="stat-label">AI-Verified</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num">SGD 2M+</span>
+      <span class="stat-label">GMV</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num">4.9★</span>
+      <span class="stat-label">Rating</span>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <section class="features">
+    <span class="overline">Platform</span>
+    <h2 class="section-heading">Why DigiCam Exchange</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">🔍</span>
+        <div class="feature-title">AI Condition Scoring</div>
+        <p class="feature-body">Our proprietary machine learning model analyses shutter count, age, and image data to produce an objective 0–1 condition score for every listing. No guesswork, no bias.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">⚡</span>
+        <div class="feature-title">Live Bidding Engine</div>
+        <p class="feature-body">Real-time auction infrastructure with millisecond precision. Watch bids update live, get outbid notifications, and never miss the closing seconds on a coveted body.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🔒</span>
+        <div class="feature-title">Secure via Stripe</div>
+        <p class="feature-body">All payments are processed through Stripe's enterprise-grade infrastructure. Funds held in escrow, released only when both parties confirm the transaction.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how">
+    <span class="overline">Process</span>
+    <h2 class="section-heading">How It Works</h2>
+    <div class="steps-row">
+      <div class="step">
+        <div class="step-circle">1</div>
+        <div class="step-title">List</div>
+        <p class="step-desc">Upload your camera details and images. Our AI scores condition instantly.</p>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step">
+        <div class="step-circle">2</div>
+        <div class="step-title">Verify</div>
+        <p class="step-desc">AI-powered verification confirms specs and suggests a fair starting price.</p>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step">
+        <div class="step-circle">3</div>
+        <div class="step-title">Bid</div>
+        <p class="step-desc">Buyers compete in real-time live auctions. Transparent, fair, and fast.</p>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step">
+        <div class="step-circle">4</div>
+        <div class="step-title">Trade</div>
+        <p class="step-desc">Secure payment via Stripe. Seller ships. Buyer confirms. Funds released.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <h2 class="cta-heading">Ready to<br>Trade?</h2>
+    <p class="cta-sub">Join thousands of photographers buying and selling with confidence on DigiCam Exchange.</p>
+    <div class="cta-buttons">
+      <a href="buyer-ui/index.html" class="btn-cta-primary">Browse Auctions →</a>
+      <a href="seller-ui/index.html" class="btn-cta-ghost">List a Camera</a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-grid">
+      <div>
+        <a href="index.html" class="footer-brand-logo">DIGI<span>CAM</span></a>
+        <p class="footer-brand-desc">The premium marketplace for pre-owned cameras. Powered by AI verification and real-time bidding technology.</p>
+      </div>
+      <div>
+        <span class="footer-col-label">Platform</span>
+        <ul class="footer-links">
+          <li><a href="buyer-ui/index.html">Live Auctions</a></li>
+          <li><a href="seller-ui/index.html">Sell a Camera</a></li>
+          <li><a href="#">How It Works</a></li>
+          <li><a href="#">AI Scoring</a></li>
+        </ul>
+      </div>
+      <div>
+        <span class="footer-col-label">Company</span>
+        <ul class="footer-links">
+          <li><a href="#">About</a></li>
+          <li><a href="#">Blog</a></li>
+          <li><a href="#">Careers</a></li>
+          <li><a href="#">Press</a></li>
+        </ul>
+      </div>
+      <div>
+        <span class="footer-col-label">Support</span>
+        <ul class="footer-links">
+          <li><a href="#">Help Centre</a></li>
+          <li><a href="#">Buyer Guide</a></li>
+          <li><a href="#">Seller Guide</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span class="footer-copyright">© 2026 DigiCam Exchange. All rights reserved.</span>
+      <span class="footer-tagline">Precision trading for precision instruments.</span>
+    </div>
+  </footer>
+
+</body>
+</html>
