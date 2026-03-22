@@ -152,8 +152,8 @@ services:
   process-bid:
     build: ./services/composite/process-bid
     environment:
-      # USER_SERVICE_URL: http://user:5001
-      # AUCTION_SERVICE_URL: http://auction:5003
+      USER_SERVICE_URL: ${USER_SERVICE_URL}
+      AUCTION_SERVICE_URL: ${AUCTION_SERVICE_URL}
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
     depends_on:
       rabbitmq:
