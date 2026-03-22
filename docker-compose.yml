@@ -127,27 +127,27 @@ services:
 
   # ── Composite Services ──────────────────────────────────────────────────────
 
-  create-auction:
-    build: ./services/composite/create-auction
-    environment:
-      # USER_SERVICE_URL: http://user:5001
-      CAMERA_SERVICE_URL: http://camera:5002
-      # AUCTION_SERVICE_URL: http://auction:5003
-      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-      AWS_REGION: ${AWS_REGION:-ap-southeast-1}
-      S3_BUCKET: ${S3_BUCKET:-digicam-images}
-      GOOGLE_VISION_API_KEY: ${GOOGLE_VISION_API_KEY}
-      PRICE_MODEL_URL: http://price-model:5100
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    networks: [digicam-net]
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.create-auction.rule=PathPrefix(`/auction/create`)"
-      - "traefik.http.services.create-auction.loadbalancer.server.port=5010"
+  # create-auction:
+  #   build: ./services/composite/create-auction
+  #   environment:
+  #     # USER_SERVICE_URL: http://user:5001
+  #     CAMERA_SERVICE_URL: http://camera:5002
+  #     # AUCTION_SERVICE_URL: http://auction:5003
+  #     RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+  #     AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+  #     AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+  #     AWS_REGION: ${AWS_REGION:-ap-southeast-1}
+  #     S3_BUCKET: ${S3_BUCKET:-digicam-images}
+  #     GOOGLE_VISION_API_KEY: ${GOOGLE_VISION_API_KEY}
+  #     PRICE_MODEL_URL: http://price-model:5100
+  #   depends_on:
+  #     rabbitmq:
+  #       condition: service_healthy
+  #   networks: [digicam-net]
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.create-auction.rule=PathPrefix(`/auction/create`)"
+  #     - "traefik.http.services.create-auction.loadbalancer.server.port=5010"
 
   process-bid:
     build: ./services/composite/process-bid
