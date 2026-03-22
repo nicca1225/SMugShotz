@@ -33,9 +33,9 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
       # Each service owns its init.sql — numbered so MySQL runs them in order
-      - ./services/atomic/user/init.sql:/docker-entrypoint-initdb.d/01-user.sql:ro
+      # - ./services/atomic/user/init.sql:/docker-entrypoint-initdb.d/01-user.sql:ro
       - ./services/atomic/camera/init.sql:/docker-entrypoint-initdb.d/02-camera.sql:ro
-      - ./services/atomic/auction/init.sql:/docker-entrypoint-initdb.d/03-auction.sql:ro
+      # - ./services/atomic/auction/init.sql:/docker-entrypoint-initdb.d/03-auction.sql:ro
       - ./services/atomic/order/init.sql:/docker-entrypoint-initdb.d/04-order.sql:ro
       - ./services/atomic/payment/init.sql:/docker-entrypoint-initdb.d/05-payment.sql:ro
     networks: [digicam-net]
@@ -60,18 +60,18 @@ services:
 
   # ── Atomic Services ─────────────────────────────────────────────────────────
 
-  user:
-    build: ./services/atomic/user
-    environment:
-      DATABASE_URL: mysql+pymysql://root:${MYSQL_ROOT_PASSWORD:-root}@mysql:3306/userdb
-    depends_on:
-      mysql:
-        condition: service_healthy
-    networks: [digicam-net]
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.user.rule=PathPrefix(`/user`)"
-      - "traefik.http.services.user.loadbalancer.server.port=5001"
+  # user:
+  #   build: ./services/atomic/user
+  #   environment:
+  #     DATABASE_URL: mysql+pymysql://root:${MYSQL_ROOT_PASSWORD:-root}@mysql:3306/userdb
+  #   depends_on:
+  #     mysql:
+  #       condition: service_healthy
+  #   networks: [digicam-net]
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.user.rule=PathPrefix(`/user`)"
+  #     - "traefik.http.services.user.loadbalancer.server.port=5001"
 
   camera:
     build: ./services/atomic/camera
@@ -86,18 +86,18 @@ services:
       - "traefik.http.routers.camera.rule=PathPrefix(`/camera`)"
       - "traefik.http.services.camera.loadbalancer.server.port=5002"
 
-  auction:
-    build: ./services/atomic/auction
-    environment:
-      DATABASE_URL: mysql+pymysql://root:${MYSQL_ROOT_PASSWORD:-root}@mysql:3306/auctiondb
-    depends_on:
-      mysql:
-        condition: service_healthy
-    networks: [digicam-net]
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.auction.rule=PathPrefix(`/auction`)"
-      - "traefik.http.services.auction.loadbalancer.server.port=5003"
+  # auction:
+  #   build: ./services/atomic/auction
+  #   environment:
+  #     DATABASE_URL: mysql+pymysql://root:${MYSQL_ROOT_PASSWORD:-root}@mysql:3306/auctiondb
+  #   depends_on:
+  #     mysql:
+  #       condition: service_healthy
+  #   networks: [digicam-net]
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.auction.rule=PathPrefix(`/auction`)"
+  #     - "traefik.http.services.auction.loadbalancer.server.port=5003"
 
   order:
     build: ./services/atomic/order
@@ -130,9 +130,9 @@ services:
   create-auction:
     build: ./services/composite/create-auction
     environment:
-      USER_SERVICE_URL: http://user:5001
+      # USER_SERVICE_URL: http://user:5001
       CAMERA_SERVICE_URL: http://camera:5002
-      AUCTION_SERVICE_URL: http://auction:5003
+      # AUCTION_SERVICE_URL: http://auction:5003
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
@@ -152,8 +152,8 @@ services:
   process-bid:
     build: ./services/composite/process-bid
     environment:
-      USER_SERVICE_URL: http://user:5001
-      AUCTION_SERVICE_URL: http://auction:5003
+      # USER_SERVICE_URL: http://user:5001
+      # AUCTION_SERVICE_URL: http://auction:5003
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
     depends_on:
       rabbitmq:
@@ -167,8 +167,8 @@ services:
   process-winner:
     build: ./services/composite/process-winner
     environment:
-      USER_SERVICE_URL: http://user:5001
-      AUCTION_SERVICE_URL: http://auction:5003
+      # USER_SERVICE_URL: http://user:5001
+      # AUCTION_SERVICE_URL: http://auction:5003
       ORDER_SERVICE_URL: http://order:5004
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
     depends_on:

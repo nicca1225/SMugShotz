@@ -65,19 +65,5 @@ def get_payment(payment_id):
         }
     )
 
-
-@app.route("/payment/<int:payment_id>", methods=["PUT"])
-def update_payment(payment_id):
-    payment = db.session.get(Payment, payment_id)
-    if not payment:
-        return jsonify({"error": "Payment not found"}), 404
-    data = request.json
-    if not data or "status" not in data:
-        return jsonify({"error": "Status is required"}), 400
-    payment.status = data["status"]
-    db.session.commit()
-    return jsonify({"message": "Payment updated", "payment_id": payment.id})
-
-
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5005, debug=True)
