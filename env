@@ -22,4 +22,4 @@ AUCTION_SERVICE_URL=https://personal-vsev7crp.outsystemscloud.com/Auction/rest/A
 
 # ── Telegram ──────────────────────────────────────────────────────────────────
 # TELEGRAM_BOT_TOKEN=8745556745:AAFxB9J8c7CumI2KP2ZfnRkCrfYCka5mYcA
-# TELEGRAM_UPDATE_USER_URL=https://personal-vsev7crp.outsystemscloud.com/User/rest/User/Use
+# TELEGRAM_UPDATE_USER_URL=https://personal-vsev7crp.outsystemscloud.com/User/rest/User/User

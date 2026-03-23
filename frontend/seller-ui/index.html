@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,450 +10,69 @@
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg: #000000;
-      --surface: #0f0f0f;
-      --surface-2: #1a1a1a;
-      --accent: #e63946;
-      --text: #ffffff;
-      --muted: #6e6e73;
-      --border: #222222;
+      --bg: #000000; --surface: #0f0f0f; --surface-2: #1a1a1a; --accent: #e63946;
+      --text: #ffffff; --muted: #6e6e73; --border: #222222; --success: #30d158; --danger: #ff453a;
     }
-
-    html { scroll-behavior: smooth; }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Inter', sans-serif;
-      font-weight: 400;
-      overflow-x: hidden;
-      min-height: 100vh;
-    }
-
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; }
     nav {
-      position: fixed;
-      top: 0;
-      z-index: 100;
-      width: 100%;
-      background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border-bottom: 1px solid #1a1a1a;
-      height: 60px;
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      align-items: center;
-      padding: 0 48px;
+      position: fixed; top: 0; z-index: 100; width: 100%; background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(24px); border-bottom: 1px solid #1a1a1a; height: 60px;
+      display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 48px;
     }
-
-    .nav-logo {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 800;
-      font-size: 20px;
-      color: var(--text);
-      text-decoration: none;
-      letter-spacing: 0.5px;
-    }
-
+    .nav-logo { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 20px; color: var(--text); text-decoration: none; }
     .nav-logo span { color: var(--accent); }
-
-    .nav-links {
-      display: flex;
-      gap: 40px;
-      align-items: center;
+    .nav-links { display: flex; gap: 40px; align-items: center; }
+    .nav-links a { font-size: 14px; color: var(--muted); text-decoration: none; }
+    .nav-links a.active, .nav-links a:hover { color: var(--text); }
+    .nav-actions { justify-self: end; display: flex; gap: 12px; align-items: center; }
+    .btn-ghost-sm, .btn-primary-sm, .btn-submit, .btn-link {
+      border-radius: 50px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 600; cursor: pointer;
     }
-
-    .nav-links a {
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      color: var(--muted);
-      text-decoration: none;
-      transition: color 0.25s ease;
-    }
-
-    .nav-links a:hover,
-    .nav-links a.active {
-      color: var(--text);
-    }
-
-    .nav-actions {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      justify-self: end;
-    }
-
-    .btn-ghost-sm {
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text);
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: 50px;
-      padding: 8px 20px;
-      cursor: pointer;
-      text-decoration: none;
-      transition: border-color 0.25s ease;
-      display: inline-flex;
-      align-items: center;
-    }
-
-    .btn-ghost-sm:hover { border-color: #555; }
-
-    .btn-primary-sm {
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text);
-      background: var(--accent);
-      border: none;
-      border-radius: 50px;
-      padding: 8px 20px;
-      cursor: pointer;
-      text-decoration: none;
-      transition: background 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
-      display: inline-flex;
-      align-items: center;
-    }
-
-    .btn-primary-sm:hover {
-      background: #c82333;
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(230, 57, 70, 0.35);
-    }
-
-    .page-hero {
-      background: #000;
-      padding-top: 100px;
-      padding-bottom: 60px;
-      border-bottom: 1px solid #1a1a1a;
-      text-align: center;
-    }
-
-    .overline {
-      font-family: 'Inter', sans-serif;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--accent);
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      display: block;
-      margin-bottom: 16px;
-    }
-
-    .page-hero-heading {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 900;
-      font-size: clamp(48px, 6vw, 72px);
-      color: var(--text);
-      text-transform: uppercase;
-      line-height: 0.95;
-      letter-spacing: -1px;
-      margin-bottom: 16px;
-    }
-
-    .page-hero-sub {
-      font-family: 'Inter', sans-serif;
-      font-size: 16px;
-      color: var(--muted);
-      font-weight: 300;
-      line-height: 1.6;
-    }
-
-    .main-content {
-      padding: 80px 64px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .content-grid {
-      display: grid;
-      grid-template-columns: 65fr 35fr;
-      gap: 48px;
-      align-items: start;
-    }
-
-    .form-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 48px;
-    }
-
-    .form-section-label {
-      font-family: 'Inter', sans-serif;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--accent);
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      display: block;
-      margin-bottom: 24px;
-    }
-
-    .field-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-bottom: 20px;
-    }
-
-    .field-label {
-      font-family: 'Inter', sans-serif;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .field-input {
-      background: #111;
-      border: 1px solid #2a2a2a;
-      border-radius: 10px;
-      color: var(--text);
-      padding: 14px 16px;
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      font-weight: 400;
-      width: 100%;
-      transition: border-color 0.25s ease, box-shadow 0.25s ease;
-      appearance: none;
-      -webkit-appearance: none;
-    }
-
-    .field-input::placeholder { color: #3a3a3a; }
-
-    .field-input:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.15);
-    }
-
-    .fields-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
-    .btn-submit {
-      width: 100%;
-      background: var(--accent);
-      color: var(--text);
-      padding: 18px;
-      border-radius: 50px;
-      font-family: 'Inter', sans-serif;
-      font-size: 16px;
-      font-weight: 600;
-      border: none;
-      cursor: pointer;
-      transition: background 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      margin-top: 12px;
-    }
-
-    .btn-submit:hover:not(:disabled) {
-      background: #c82333;
-      transform: translateY(-1px);
-      box-shadow: 0 8px 28px rgba(230, 57, 70, 0.4);
-    }
-
-    .btn-submit:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    .spinner {
-      width: 18px;
-      height: 18px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      display: none;
-    }
-
-    .btn-submit.loading .spinner { display: block; }
-    .btn-submit.loading .btn-label { display: none; }
-    .btn-submit.loading .btn-label-loading { display: inline; }
-    .btn-label-loading { display: none; }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .result-card {
-      display: none;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-left: 3px solid var(--accent);
-      border-radius: 16px;
-      padding: 40px;
-      margin-top: 24px;
-    }
-
-    .result-card.visible { display: block; }
-
-    .result-check {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: rgba(48, 209, 88, 0.15);
-      border: 1px solid #30d158;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      margin-bottom: 20px;
-    }
-
-    .result-created-label {
-      font-family: 'Inter', sans-serif;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--accent);
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-      display: block;
-    }
-
-    .result-auction-id {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 700;
-      font-size: 18px;
-      color: var(--text);
-      margin-bottom: 24px;
-      word-break: break-all;
-    }
-
-    .result-price-label {
-      font-family: 'Inter', sans-serif;
-      font-size: 12px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 4px;
-    }
-
-    .result-price {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 900;
-      font-size: 48px;
-      color: var(--accent);
-      line-height: 1;
-      margin-bottom: 24px;
-    }
-
-    .btn-view-auctions {
-      display: inline-flex;
-      align-items: center;
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: 50px;
-      padding: 12px 24px;
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text);
-      text-decoration: none;
-      transition: border-color 0.25s ease;
-    }
-
-    .btn-view-auctions:hover { border-color: #555; }
-
-    .error-card {
-      display: none;
-      background: rgba(255, 68, 68, 0.05);
-      border: 1px solid var(--border);
-      border-left: 3px solid #ff4444;
-      border-radius: 16px;
-      padding: 32px 40px;
-      margin-top: 24px;
-    }
-
-    .error-card.visible { display: block; }
-
-    .error-title {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 700;
-      font-size: 18px;
-      color: #ff4444;
-      margin-bottom: 8px;
-      text-transform: uppercase;
-    }
-
-    .error-msg {
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      color: var(--muted);
-      line-height: 1.6;
-    }
-
-    .sidebar {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .sidebar-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 28px;
-    }
-
-    .sidebar-card-title {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 700;
-      font-size: 16px;
-      color: var(--accent);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 16px;
-    }
-
-    .sidebar-bullets {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .sidebar-bullets li {
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      color: var(--muted);
-      line-height: 1.5;
-      display: flex;
-      gap: 8px;
-    }
-
-    .sidebar-bullets li::before {
-      content: '→';
-      color: var(--accent);
-      flex-shrink: 0;
-      font-weight: 600;
-    }
-
-    .sidebar-para {
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      color: var(--muted);
-      line-height: 1.65;
-    }
-
-    @media (max-width: 768px) {
+    .btn-ghost-sm, .btn-link { color: var(--text); background: transparent; border: 1px solid var(--border); padding: 8px 20px; }
+    .btn-primary-sm, .btn-submit { color: var(--text); background: var(--accent); border: none; }
+    .btn-primary-sm { padding: 8px 20px; }
+    .page-hero { background: #000; padding: 100px 24px 44px; border-bottom: 1px solid #1a1a1a; text-align: center; }
+    .overline { font-size: 11px; font-weight: 600; color: var(--accent); letter-spacing: 3px; text-transform: uppercase; display: block; margin-bottom: 16px; }
+    .page-hero-heading { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: clamp(52px, 7vw, 84px); line-height: 0.92; text-transform: uppercase; }
+    .page-hero-sub { color: var(--muted); font-size: 16px; line-height: 1.6; max-width: 760px; margin: 18px auto 0; }
+    .main-content { padding: 48px 64px 80px; max-width: 1380px; margin: 0 auto; }
+    .content-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.8fr); gap: 28px; align-items: start; }
+    .form-card, .sidebar-card, .state-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 32px; }
+    .form-section-label, .sidebar-card-title { font-size: 11px; font-weight: 600; color: var(--accent); letter-spacing: 3px; text-transform: uppercase; display: block; margin-bottom: 22px; }
+    .fields-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .field-group { margin-bottom: 18px; }
+    .field-label { display: block; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    .field-input, .field-select { width: 100%; background: #090909; color: var(--text); border: 1px solid #232323; border-radius: 14px; padding: 16px; font-size: 15px; }
+    .field-input:focus, .field-select:focus { outline: none; border-color: var(--accent); }
+    .field-help { margin-top: 8px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .btn-submit { width: 100%; padding: 16px 24px; margin-top: 10px; }
+    .sidebar-card { display: grid; gap: 14px; }
+    .sidebar-bullets { list-style: none; display: grid; gap: 10px; }
+    .sidebar-bullets li { color: var(--muted); font-size: 14px; line-height: 1.55; display: flex; gap: 10px; }
+    .sidebar-bullets li::before { content: '→'; color: var(--accent); font-weight: 700; }
+    .state-card { display: none; margin-top: 18px; }
+    .state-card.visible { display: block; }
+    .state-title { font-family: 'Barlow Condensed', sans-serif; font-size: 30px; text-transform: uppercase; margin-bottom: 12px; }
+    .state-card.success { border-left: 3px solid var(--success); background: rgba(48,209,88,0.05); }
+    .state-card.error { border-left: 3px solid var(--danger); background: rgba(255,69,58,0.06); }
+    .state-card.success .state-title { color: var(--success); }
+    .state-card.error .state-title { color: var(--danger); }
+    .state-text { color: var(--muted); line-height: 1.7; font-size: 14px; }
+    .state-id { margin: 16px 0 20px; padding: 14px 16px; border: 1px solid #2a2a2a; border-radius: 14px; background: #090909; }
+    .state-id span { display: block; font-size: 11px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px; }
+    .state-id strong { font-family: 'Barlow Condensed', sans-serif; font-size: 36px; }
+    .state-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .user-chip { padding: 10px 16px; border-radius: 14px; border: 1px solid #232323; background: #090909; }
+    .user-chip span { display: block; font-size: 11px; color: var(--muted); letter-spacing: 1.4px; text-transform: uppercase; margin-bottom: 6px; }
+    .user-chip strong { font-family: 'Barlow Condensed', sans-serif; font-size: 32px; }
+    .hidden { display: none !important; }
+    @media (max-width: 960px) {
       nav { padding: 0 24px; }
       .nav-links { display: none; }
-      .main-content { padding: 40px 24px; }
-      .content-grid { grid-template-columns: 1fr; }
-      .form-card { padding: 28px 24px; }
-      .fields-row { grid-template-columns: 1fr; }
+      .main-content { padding: 36px 20px 64px; }
+      .content-grid, .fields-row { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -461,191 +81,185 @@
     <a href="../index.html" class="nav-logo">SMug<span>Shotz</span></a>
     <div class="nav-links">
       <a href="../buyer-ui/index.html">Auctions</a>
-      <a href="../seller-ui/index.html" class="active">Sell</a>
+      <a href="./index.html" class="active">Create Auction</a>
     </div>
     <div class="nav-actions">
-      <a href="#" class="btn-ghost-sm">Sign In</a>
-      <a href="../buyer-ui/index.html" class="btn-primary-sm">Get Started</a>
+      <a href="./signup.html" class="btn-ghost-sm">Create Account</a>
+      <a href="../buyer-ui/index.html" class="btn-primary-sm">View Auctions</a>
     </div>
   </nav>
 
   <div class="page-hero">
-    <span class="overline">Sell</span>
-    <h1 class="page-hero-heading">Create Auction</h1>
-    <p class="page-hero-sub">Temporary test page for the auction creation flow.</p>
+    <span class="overline">Create</span>
+    <h1 class="page-hero-heading">List a New Auction</h1>
+    <p class="page-hero-sub">Any signed-in user can create auctions and bid on other listings. Your user ID is prefilled below, and your auction will immediately show up in the cards view once created.</p>
   </div>
 
   <div class="main-content">
     <div class="content-grid">
       <div>
-        <div class="form-card">
+        <div class="form-card" id="formCard">
           <span class="form-section-label">Auction Details</span>
-
+          <div class="user-chip" style="margin-bottom:24px;">
+            <span>Logged In User</span>
+            <strong id="loggedInUserValue">—</strong>
+          </div>
           <form id="listingForm" novalidate>
             <div class="fields-row">
               <div class="field-group">
                 <label class="field-label" for="sellerId">Seller ID</label>
-                <input class="field-input" type="number" id="sellerId" name="seller_id" placeholder="e.g. 2" min="1" required />
+                <input class="field-input" type="number" id="sellerId" name="seller_id" min="1" required readonly />
+                <div class="field-help">This is auto-filled from the account you created earlier.</div>
               </div>
               <div class="field-group">
                 <label class="field-label" for="cameraId">Camera ID</label>
-                <input class="field-input" type="number" id="cameraId" name="camera_id" placeholder="e.g. 1" min="1" required />
+                <input class="field-input" type="number" id="cameraId" name="camera_id" placeholder="e.g. 101" min="1" required />
+                <div class="field-help">Use a placeholder camera ID for now while the camera details flow is still being finalised.</div>
               </div>
             </div>
-
             <div class="fields-row">
               <div class="field-group">
                 <label class="field-label" for="startPrice">Start Price (SGD)</label>
                 <input class="field-input" type="number" id="startPrice" name="start_price" placeholder="e.g. 500" min="1" step="0.01" required />
               </div>
               <div class="field-group">
-                <label class="field-label" for="endDate">End Date &amp; Time</label>
+                <label class="field-label" for="endDate">End Date & Time</label>
                 <input class="field-input" type="datetime-local" id="endDate" name="end_time" required />
               </div>
             </div>
-
-            <button type="submit" class="btn-submit" id="submitBtn">
-              <div class="spinner"></div>
-              <span class="btn-label">Create Auction</span>
-              <span class="btn-label-loading">Creating Auction…</span>
-            </button>
+            <button type="submit" class="btn-submit" id="submitBtn">Create Auction</button>
           </form>
-
-          <div class="result-card" id="successCard">
-            <div class="result-check">✓</div>
-            <span class="result-created-label">Auction Created</span>
-            <div class="result-auction-id" id="resultAuctionId">—</div>
-            <div class="result-price-label">Start Price</div>
-            <div class="result-price" id="resultPrice">SGD —</div>
-            <a href="../buyer-ui/index.html" class="btn-view-auctions">View Live Auctions →</a>
+          <div class="state-card success" id="successCard">
+            <div class="state-title">Auction Created</div>
+            <p class="state-text">Your auction was created successfully. You can now view it in the auction cards page and start accepting bids from other users.</p>
+            <div class="state-id"><span>Auction ID</span><strong id="resultAuctionId">—</strong></div>
+            <div class="state-actions">
+              <a href="../buyer-ui/index.html" class="btn-primary-sm">View Auctions</a>
+              <a href="./index.html" class="btn-link">Create Another</a>
+            </div>
           </div>
-
-          <div class="error-card" id="errorCard">
-            <div class="error-title">Submission Failed</div>
-            <p class="error-msg" id="errorMsg">An unexpected error occurred. Please try again.</p>
+          <div class="state-card error" id="errorCard">
+            <div class="state-title">Submission Failed</div>
+            <p class="state-text" id="errorMsg">Please try again.</p>
+          </div>
+          <div class="state-card error hidden" id="authCard">
+            <div class="state-title">Create an Account First</div>
+            <p class="state-text">We couldn't find a logged-in user in this browser yet. Create your account first so we can attach the correct seller ID to this auction.</p>
+            <div class="state-actions" style="margin-top:18px;">
+              <a href="./signup.html" class="btn-primary-sm">Create Account</a>
+              <a href="../buyer-ui/index.html" class="btn-link">Browse Auctions</a>
+            </div>
           </div>
         </div>
       </div>
-
       <div class="sidebar">
         <div class="sidebar-card">
-          <div class="sidebar-card-title">Current Scope</div>
+          <div class="sidebar-card-title">How This Page Works</div>
           <ul class="sidebar-bullets">
-            <li>This page is temporarily aligned to the current CreateAuction API</li>
-            <li>It uses only seller ID, camera ID, start price, and end time</li>
-            <li>Image analysis and pricing can be added back later</li>
+            <li>Every user can now both create auctions and place bids.</li>
+            <li>The seller ID is automatically taken from the account you created on this browser.</li>
+            <li>Cards are imageless for now, but the listing flow is ready for the rest of the camera details later.</li>
           </ul>
         </div>
-
         <div class="sidebar-card">
-          <div class="sidebar-card-title">Why This Helps</div>
+          <div class="sidebar-card-title">Current Inputs</div>
           <ul class="sidebar-bullets">
-            <li>Lets you prove the frontend can call the backend successfully</li>
-            <li>Matches your current auction database and service flow better</li>
-            <li>Reduces debugging while scenario 1 is still incomplete</li>
+            <li>Camera ID is still manual for now.</li>
+            <li>Start price and end time are sent to the current Create Auction API.</li>
+            <li>Once created, the auction can be viewed and bid on from the auctions page.</li>
           </ul>
-        </div>
-
-        <div class="sidebar-card">
-          <div class="sidebar-card-title">Next Step Later</div>
-          <p class="sidebar-para">
-            Once the camera processing flow is ready, you can expand this page again to
-            collect model, shutter count, image upload, suggested price, and condition score.
-          </p>
         </div>
       </div>
     </div>
   </div>
 
   <script>
+    const STORAGE_KEY = 'smugshotz_user';
     const API_URL = 'https://personal-vsev7crp.outsystemscloud.com/CreateAuction/rest/CreateAuctionAPI/auction/create';
-
-    (function setDefaultEndTime() {
-      const endDateInput = document.getElementById('endDate');
-      const sevenDays = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-      const pad = n => String(n).padStart(2, '0');
-      const formatted = `${sevenDays.getFullYear()}-${pad(sevenDays.getMonth() + 1)}-${pad(sevenDays.getDate())}T${pad(sevenDays.getHours())}:${pad(sevenDays.getMinutes())}`;
-      endDateInput.value = formatted;
-    })();
 
     const listingForm = document.getElementById('listingForm');
     const submitBtn = document.getElementById('submitBtn');
     const successCard = document.getElementById('successCard');
     const errorCard = document.getElementById('errorCard');
+    const authCard = document.getElementById('authCard');
     const errorMsg = document.getElementById('errorMsg');
+    const sellerIdInput = document.getElementById('sellerId');
+    const loggedInUserValue = document.getElementById('loggedInUserValue');
+
+    (function setDefaultEndTime() {
+      const endDateInput = document.getElementById('endDate');
+      const threeDays = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+      const pad = n => String(n).padStart(2, '0');
+      endDateInput.value = `${threeDays.getFullYear()}-${pad(threeDays.getMonth() + 1)}-${pad(threeDays.getDate())}T${pad(threeDays.getHours())}:${pad(threeDays.getMinutes())}`;
+    })();
+
+    function getStoredUser() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+      } catch (_) {
+        return null;
+      }
+    }
+
+    const storedUser = getStoredUser();
+    if (storedUser && storedUser.user_id) {
+      sellerIdInput.value = storedUser.user_id;
+      loggedInUserValue.textContent = storedUser.user_id;
+    } else {
+      loggedInUserValue.textContent = '—';
+      listingForm.classList.add('hidden');
+      authCard.classList.remove('hidden');
+      authCard.classList.add('visible');
+    }
 
     listingForm.addEventListener('submit', async function (e) {
       e.preventDefault();
-
       successCard.classList.remove('visible');
       errorCard.classList.remove('visible');
 
-      const sellerId = Number(document.getElementById('sellerId').value);
-      const cameraId = Number(document.getElementById('cameraId').value);
-      const startPrice = Number(document.getElementById('startPrice').value);
-      const endTime = document.getElementById('endDate').value;
+      const payload = {
+        seller_id: Number(sellerIdInput.value),
+        camera_id: Number(document.getElementById('cameraId').value),
+        start_price: Number(document.getElementById('startPrice').value),
+        end_time: document.getElementById('endDate').value
+      };
 
-      if (!sellerId || !cameraId || !startPrice || !endTime) {
-        errorMsg.textContent = 'Please fill in all fields.';
+      if (!payload.seller_id || !payload.camera_id || !payload.start_price || !payload.end_time) {
+        errorMsg.textContent = 'Please fill in all fields before creating the auction.';
         errorCard.classList.add('visible');
         return;
       }
 
-      const payload = {
-        seller_id: sellerId,
-        camera_id: cameraId,
-        start_price: startPrice,
-        end_time: endTime
-      };
-
-      submitBtn.classList.add('loading');
       submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating Auction…';
 
       try {
         const response = await fetch(API_URL, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
 
         let data = {};
-        try {
-          data = await response.json();
-        } catch (_) {}
+        try { data = await response.json(); } catch (_) {}
 
         if (response.ok || response.status === 201) {
-          document.getElementById('resultAuctionId').textContent =
-            data.auction_id
-            ? `Auction ID: ${data.auction_id}`
-            : 'Auction created successfully';
-
-          document.getElementById('resultPrice').textContent =
-            `SGD ${startPrice.toLocaleString('en-SG', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2
-            })}`;
-
+          const auctionId = data.auction_id || data?.data?.auction_id || 'Created';
+          document.getElementById('resultAuctionId').textContent = auctionId;
           successCard.classList.add('visible');
-          successCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           listingForm.reset();
+          sellerIdInput.value = storedUser.user_id;
+          document.getElementById('cameraId').focus();
         } else {
-          errorMsg.textContent =
-            data.message ||
-            data.error ||
-            `Server returned status ${response.status}.`;
+          errorMsg.textContent = data?.error || data?.message || `Server returned status ${response.status}.`;
           errorCard.classList.add('visible');
-          errorCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
       } catch (err) {
-        errorMsg.textContent =
-          err.message || 'Network error. Please check your connection and try again.';
+        errorMsg.textContent = err.message || 'Network error. Please try again.';
         errorCard.classList.add('visible');
-        errorCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       } finally {
-        submitBtn.classList.remove('loading');
         submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Auction';
       }
     });
   </script>
