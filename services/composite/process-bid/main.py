@@ -23,7 +23,33 @@ CORS(app)
 USER_SERVICE = os.environ.get("USER_SERVICE_URL", "http://user:5001")
 AUCTION_SERVICE = os.environ.get("AUCTION_SERVICE_URL", "http://auction:5003")
 RABBITMQ_URL = os.environ.get("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/")
+NOTIFICATION_SERVICE = os.environ.get(
+    "NOTIFICATION_SERVICE_URL",
+    "https://personal-vsev7crp.outsystemscloud.com/Notification/rest/Notification"
+)
+def send_bid_notification(chat_id, auction_id: int, bidder_id: int, bid_amount: float):
+    payload = {
+        "chat_id": chat_id,
+        "auction_id": auction_id,
+        "bidder_id": bidder_id,
+        "bid_amount": bid_amount,
+    }
 
+    print("DEBUG notification URL:", f"{NOTIFICATION_SERVICE}/bid")
+    print("DEBUG notification payload:", payload)
+
+    try:
+        resp = http.post(f"{NOTIFICATION_SERVICE}/bid", json=payload, timeout=5)
+        print("DEBUG notification status:", resp.status_code)
+        print("DEBUG notification response:", resp.text)
+
+        if resp.status_code not in (200, 201, 204):
+            app.logger.warning(
+                f"Notification service returned {resp.status_code}: {resp.text}"
+            )
+    except http.RequestException as exc:
+        print("DEBUG notification exception:", str(exc))
+        app.logger.warning(f"Failed to call notification service: {exc}")
 
 def publish_event(event_type: str, payload: dict):
     try:
@@ -134,7 +160,11 @@ def update_auction(auction: dict, bid_amount: float, bidder_id: int):
     }
 
     try:
-        resp = http.put(f"{AUCTION_SERVICE}/Auction", json=update_payload, timeout=5)
+       resp = http.put(
+    "https://personal-vsev7crp.outsystemscloud.com/Auction/rest/Auction/Auction",
+    json=update_payload,
+    timeout=5
+   )
     except http.RequestException as exc:
         return None, (jsonify({"error": f"Failed to update auction: {exc}"}), 502)
 
@@ -172,8 +202,8 @@ def process_bid():
     if user_error:
         return user_error
 
-    if str(bidder.get("role", "")).lower() != "buyer":
-        return jsonify({"error": "User is not a buyer"}), 403
+    #if str(bidder.get("role", "")).lower() != "buyer":
+      #return jsonify({"error": "User is not a buyer"}), 403**
 
     # 2. Fetch auction
     auction, auction_error = get_auction(auction_id)
@@ -201,27 +231,22 @@ def process_bid():
     # 5a. Notify outbid previous bidder
     if previous_bidder_id and previous_bidder_id != bidder_id:
         prev_user, _ = get_user(previous_bidder_id)
-        if prev_user:
-            publish_event(
-                "bid.outbid",
-                {
-                    "auction_id": auction_id,
-                    "outbid_user_id": previous_bidder_id,
-                    "outbid_telegram": prev_user.get("telegram_handle"),
-                    "new_highest_bid": bid_amount,
-                },
+        if prev_user and prev_user.get("telegram_chat_id"):
+            send_bid_notification(
+                chat_id=prev_user["telegram_chat_id"],
+                auction_id=auction_id,
+                bidder_id=previous_bidder_id,
+                bid_amount=bid_amount,
             )
 
     # 5b. Confirm new bid
-    publish_event(
-        "bid.confirmed",
-        {
-            "auction_id": auction_id,
-            "bidder_id": bidder_id,
-            "bidder_telegram": bidder.get("telegram_handle"),
-            "bid_amount": bid_amount,
-        },
-    )
+    if bidder.get("telegram_chat_id"):
+        send_bid_notification(
+            chat_id=bidder["telegram_chat_id"],
+            auction_id=auction_id,
+            bidder_id=bidder_id,
+            bid_amount=bid_amount,
+        )
 
     return jsonify(
         {

@@ -315,7 +315,7 @@
     <a href="../index.html" class="nav-logo">SMug<span>Shotz</span></a>
     <div class="nav-links">
       <a href="../buyer-ui/index.html">Auctions</a>
-      <a href="./index.html">Create Auction</a>
+      <a href="./index.html" class="active">Sell</a>
     </div>
     <div class="nav-actions">
       <a href="#" class="btn-ghost-sm">Sign In</a>
@@ -328,7 +328,7 @@
       <span class="overline">Seller</span>
       <h1 class="signup-title">Create Seller Account</h1>
       <p class="signup-sub">
-        Create your account first, then connect Telegram to link your notifications and start creating or bidding on auctions.
+        Create your seller account first, then connect Telegram to link your notifications.
       </p>
 
       <form id="signupForm" novalidate>
@@ -353,7 +353,7 @@
       <div class="status-card success-card" id="successCard">
         <div class="status-title">Account Created</div>
         <p class="status-text">
-          Your account was created successfully. Connect Telegram, then head to the auction pages.
+          Your seller account was created successfully. Click the button below to connect Telegram.
         </p>
 
         <div class="user-id-box">
@@ -365,7 +365,7 @@
           <a id="telegramLink" class="btn-telegram" href="#" target="_blank" rel="noopener noreferrer">
             Connect Telegram
           </a>
-          <a href="./index.html" class="btn-secondary-link">Create Auction</a>
+          <a href="./index.html" class="btn-secondary-link">Go to Seller Page</a>
         </div>
       </div>
 
@@ -378,7 +378,6 @@
 
   <script>
     const API_URL = 'https://personal-vsev7crp.outsystemscloud.com/User/rest/User/user/';
-    const STORAGE_KEY = "smugshotz_user";
     const BOT_USERNAME = 'Smugshotz_bot';
 
     const signupForm = document.getElementById('signupForm');
@@ -439,15 +438,6 @@
           }
 
           userIdValue.textContent = userId;
-
-          const user = {
-            user_id: Number(userId),
-            name,
-            email,
-            telegram_handle: telegramHandle
-          };
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-          localStorage.setItem('user_id', String(userId));
 
           const deepLink = `https://t.me/${BOT_USERNAME}?start=USER_${userId}`;
           telegramLink.href = deepLink;

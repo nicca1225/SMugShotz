@@ -152,13 +152,16 @@ services:
   process-bid:
     build: ./services/composite/process-bid
     environment:
-      USER_SERVICE_URL: ${USER_SERVICE_URL}
-      AUCTION_SERVICE_URL: ${AUCTION_SERVICE_URL}
+      USER_SERVICE_URL: https://personal-vsev7crp.outsystemscloud.com/User/rest/User
+      AUCTION_SERVICE_URL: https://personal-vsev7crp.outsystemscloud.com/Auction/rest/Auction
+      NOTIFICATION_SERVICE_URL: https://personal-vsev7crp.outsystemscloud.com/Notification/rest/NotificationAPI
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
     depends_on:
       rabbitmq:
         condition: service_healthy
     networks: [digicam-net]
+    ports:
+      - "5011:5011"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.process-bid.rule=PathPrefix(`/bid`)"
@@ -175,6 +178,7 @@ services:
       rabbitmq:
         condition: service_healthy
     networks: [digicam-net]
+
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.process-winner.rule=PathPrefix(`/process-winner`) || PathPrefix(`/rollback`)"
