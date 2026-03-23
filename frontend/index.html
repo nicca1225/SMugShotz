@@ -125,12 +125,13 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-end;
+      padding-bottom: 130px;
 
       /* HERO BACKGROUND IMAGE
          Drop your photo into: frontend/assets/hero-bg.jpg
          Then refresh — it will appear here automatically.        */
-      background-image: url('assets/hero-bg.jpg');
+      background-image: url('assets/fujifilm 3d.jpg');
       background-size: cover;
       background-position: center center;
       background-color: #111; /* shown while image loads / as fallback */
@@ -142,11 +143,36 @@
       position: absolute;
       inset: 0;
       background:
-        radial-gradient(ellipse 30% 100% at 0%   50%, rgba(0,0,0,0.88), transparent),
-        radial-gradient(ellipse 30% 100% at 100% 50%, rgba(0,0,0,0.88), transparent),
-        linear-gradient(rgba(0,0,0,0.52), rgba(0,0,0,0.52));
+        radial-gradient(ellipse 30% 100% at 0%   50%, rgba(0,0,0,0.92), transparent),
+        radial-gradient(ellipse 30% 100% at 100% 50%, rgba(0,0,0,0.92), transparent),
+        linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.80) 100%);
       z-index: 2;
       pointer-events: none;
+    }
+
+    /* ── 3-D CAMERA LAYER: same image masked to camera body only, floats above text */
+    .hero-camera-fg {
+      position: absolute;
+      inset: 0;
+      background-image: url('assets/fujifilm 3d.jpg');
+      background-size: cover;
+      background-position: center center;
+      z-index: 4;                /* above text (z-index 3) */
+      pointer-events: none;
+
+      /* Reveal only the camera-body region; feather the edges */
+      mask-image: radial-gradient(
+        ellipse 52% 70% at 50% 42%,
+        black 28%,
+        rgba(0,0,0,0.6) 48%,
+        transparent 68%
+      );
+      -webkit-mask-image: radial-gradient(
+        ellipse 52% 70% at 50% 42%,
+        black 28%,
+        rgba(0,0,0,0.6) 48%,
+        transparent 68%
+      );
     }
 
     .hero-badge {
@@ -167,6 +193,27 @@
       letter-spacing: 0.3px;
     }
 
+    /* SMUG — sits ABOVE the camera foreground layer */
+    .hero-smug {
+      position: absolute;
+      top: 112px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 5;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: clamp(96px, 17vw, 210px);
+      line-height: 0.86;
+      letter-spacing: -4px;
+      text-transform: uppercase;
+      color: var(--text);
+      text-shadow: 0 4px 40px rgba(0,0,0,0.6);
+      white-space: nowrap;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* SHOTZ — sits BEHIND the camera foreground layer */
     .hero-display {
       position: relative;
       z-index: 3;
@@ -179,17 +226,16 @@
       display: block;
       font-family: 'Barlow Condensed', sans-serif;
       font-weight: 900;
-      font-size: clamp(96px, 16vw, 190px);
-      line-height: 0.88;
+      font-size: clamp(96px, 17vw, 210px);
+      line-height: 0.86;
       letter-spacing: -4px;
       text-transform: uppercase;
     }
 
-    .hero-line-solid { color: var(--text); }
-
     .hero-line-outline {
-      -webkit-text-stroke: 3px rgba(255, 255, 255, 0.85);
+      -webkit-text-stroke: 3px rgba(255, 255, 255, 0.80);
       color: transparent;
+      text-shadow: none;
     }
 
     .hero-bottom {
@@ -563,7 +609,12 @@
       nav { padding: 0 24px; }
       .nav-links { display: none; }
 
+      .hero { padding-bottom: 110px; }
       .hero-badge { font-size: 10px; top: 75px; white-space: normal; text-align: center; max-width: 280px; }
+      .hero-camera-fg {
+        mask-image: radial-gradient(ellipse 80% 55% at 50% 42%, black 25%, rgba(0,0,0,0.5) 45%, transparent 65%);
+        -webkit-mask-image: radial-gradient(ellipse 80% 55% at 50% 42%, black 25%, rgba(0,0,0,0.5) 45%, transparent 65%);
+      }
 
       .hero-bottom {
         flex-direction: column;
@@ -617,9 +668,16 @@
 
   <!-- HERO -->
   <section class="hero">
+    <!-- Foreground camera layer — sits above the text to create the 3-D depth illusion -->
+    <div class="hero-camera-fg"></div>
+
     <div class="hero-badge">A New Era in Camera Trading &nbsp;|&nbsp; Overview</div>
+
+    <!-- SMUG: above the camera (z-index 5) -->
+    <div class="hero-smug">SMUG</div>
+
+    <!-- SHOTZ: behind the camera (z-index 3) -->
     <div class="hero-display">
-      <span class="hero-line hero-line-solid">SMUG</span>
       <span class="hero-line hero-line-outline">SHOTZ</span>
     </div>
     <div class="hero-bottom">
