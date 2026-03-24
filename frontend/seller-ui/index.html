@@ -1,38 +1,21 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="../js/zoom-persist.js"></script>
-  <title>Sell Your Camera — SMugShotz</title>
+  <title>Create Auction — SMugShotz</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg: #000000;
-      --surface: #0f0f0f;
-      --surface-2: #1a1a1a;
-      --accent: #e63946;
-      --text: #ffffff;
-      --muted: #6e6e73;
-      --border: #222222;
+      --bg: #000000; --surface: #0f0f0f; --surface-2: #1a1a1a; --accent: #e63946;
+      --text: #ffffff; --muted: #6e6e73; --border: #222222; --success: #30d158; --danger: #ff453a;
     }
-
-    html { scroll-behavior: smooth; }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Inter', sans-serif;
-      font-weight: 400;
-      overflow-x: hidden;
-      min-height: 100vh;
-    }
-
-    /* ── NAV ─────────────────────────────────────────────────────── */
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; }
     nav {
       position: fixed;
       top: 0;
@@ -48,832 +31,247 @@
       align-items: center;
       padding: 0 48px;
     }
-    nav::after {
-      content: '';
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent 0%, rgba(230,57,70,0.5) 50%, transparent 100%);
+    .nav-logo { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 20px; color: var(--text); text-decoration: none; }
+    .nav-logo span { color: var(--accent); }
+    .nav-links { display: flex; gap: 40px; align-items: center; }
+    .nav-links a { font-size: 14px; color: var(--muted); text-decoration: none; }
+    .nav-links a.active, .nav-links a:hover { color: var(--text); }
+    .nav-actions { justify-self: end; display: flex; gap: 12px; align-items: center; }
+    .btn-ghost-sm, .btn-primary-sm, .btn-submit, .btn-link {
+      border-radius: 50px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 600; cursor: pointer;
     }
-    .nav-logo {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 800;
-      font-size: 22px;
-      color: var(--text);
-      text-decoration: none;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      justify-self: start;
-    }
-    .nav-logo span { color: var(--accent); text-shadow: 0 0 18px rgba(230,57,70,0.55); }
-    .nav-links {
-      display: flex;
-      gap: 40px;
-      align-items: center;
-    }
-    .nav-links a {
-      font-family: 'Inter', sans-serif;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--muted);
-      text-decoration: none;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      position: relative;
-      transition: color 0.25s ease;
-    }
-    .nav-links a::after {
-      content: '';
-      position: absolute;
-      bottom: -4px; left: 0;
-      width: 0; height: 1px;
-      background: var(--accent);
-      transition: width 0.3s ease;
-    }
-    .nav-links a:hover { color: var(--text); }
-    .nav-links a:hover::after { width: 100%; }
-    .nav-links a.active { color: var(--text); }
-    .nav-links a.active::after { width: 100%; }
-    .nav-actions {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      justify-self: end;
-    }
-    .btn-ghost-sm {
-      font-family: 'Inter', sans-serif;
-      font-size: 13px;
-      font-weight: 500;
-      color: rgba(255,255,255,0.8);
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.14);
-      border-radius: 50px;
-      padding: 8px 20px;
-      cursor: pointer;
-      text-decoration: none;
-      letter-spacing: 0.3px;
-      transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
-      display: inline-flex;
-      align-items: center;
-    }
-    .btn-ghost-sm:hover {
-      background: rgba(255,255,255,0.09);
-      border-color: rgba(255,255,255,0.32);
-      color: #fff;
-    }
-    .btn-primary-sm {
-      font-family: 'Inter', sans-serif;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text);
-      background: linear-gradient(135deg, #f04555 0%, #e63946 50%, #c82333 100%);
-      border: none;
-      border-radius: 50px;
-      padding: 8px 22px;
-      cursor: pointer;
-      text-decoration: none;
-      letter-spacing: 0.3px;
-      box-shadow: 0 2px 14px rgba(230,57,70,0.35), inset 0 1px 0 rgba(255,255,255,0.18);
-      transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
-      display: inline-flex;
-      align-items: center;
-      position: relative;
-      overflow: hidden;
-    }
-    .btn-primary-sm:hover {
-      filter: brightness(1.1);
-      transform: translateY(-1px);
-      box-shadow: 0 8px 24px rgba(230,57,70,0.50), inset 0 1px 0 rgba(255,255,255,0.18);
-    }
-
-    /* ── PAGE HERO ───────────────────────────────────────────────── */
-    .page-hero {
-      background: #000;
-      padding-top: 100px;
-      padding-bottom: 60px;
-      border-bottom: 1px solid #1a1a1a;
-      text-align: center;
-    }
-
-    .overline {
-      font-family: 'Inter', sans-serif;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--accent);
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      display: block;
-      margin-bottom: 16px;
-    }
-
-    .page-hero-heading {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 900;
-      font-size: clamp(48px, 6vw, 72px);
-      color: var(--text);
-      text-transform: uppercase;
-      line-height: 0.95;
-      letter-spacing: -1px;
-      margin-bottom: 16px;
-    }
-
-    .page-hero-sub {
-      font-family: 'Inter', sans-serif;
-      font-size: 16px;
-      color: var(--muted);
-      font-weight: 300;
-      line-height: 1.6;
-    }
-
-    /* ── MAIN CONTENT ────────────────────────────────────────────── */
-    .main-content {
-      padding: 80px 64px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .content-grid {
-      display: grid;
-      grid-template-columns: 65fr 35fr;
-      gap: 48px;
-      align-items: start;
-    }
-
-    /* ── FORM CARD ───────────────────────────────────────────────── */
-    .form-card {
-      background: linear-gradient(160deg, #161616 0%, #111 100%);
-      border: 1px solid var(--border);
-      border-top: 2px solid var(--accent);
-      border-radius: 20px;
-      padding: 48px;
-      position: relative;
-      overflow: hidden;
-    }
-    .form-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 20%; right: 20%;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(230,57,70,0.5), transparent);
-      filter: blur(1px);
-    }
-
-    .form-section-label {
-      font-family: 'Inter', sans-serif;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--accent);
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      display: block;
-      margin-bottom: 24px;
-    }
-
-    .field-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-bottom: 20px;
-    }
-
-    .field-label {
-      font-family: 'Inter', sans-serif;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .field-input {
-      background: #111;
-      border: 1px solid #2a2a2a;
-      border-radius: 10px;
-      color: var(--text);
-      padding: 14px 16px;
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      font-weight: 400;
-      width: 100%;
-      transition: border-color 0.25s ease, box-shadow 0.25s ease;
-      appearance: none;
-      -webkit-appearance: none;
-    }
-    .field-input::placeholder { color: #3a3a3a; }
-    .field-input:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.15);
-    }
-
-    .fields-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
-    .form-divider {
-      border: none;
-      border-top: 1px solid var(--border);
-      margin: 32px 0;
-    }
-
-    /* ── UPLOAD ZONE ─────────────────────────────────────────────── */
-    .upload-zone {
-      border: 2px dashed #2a2a2a;
-      border-radius: 14px;
-      padding: 56px 24px;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color 0.25s ease, background 0.25s ease;
-      position: relative;
-      margin-bottom: 32px;
-    }
-    .upload-zone:hover,
-    .upload-zone.drag-over {
-      border-color: var(--accent);
-      background: rgba(230, 57, 70, 0.03);
-    }
-
-    .upload-zone input[type="file"] {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      cursor: pointer;
-      width: 100%;
-      height: 100%;
-    }
-
-    .upload-icon {
-      font-size: 40px;
-      display: block;
-      margin-bottom: 12px;
-      line-height: 1;
-    }
-
-    .upload-title {
-      font-family: 'Inter', sans-serif;
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 6px;
-    }
-
-    .upload-hint {
-      font-family: 'Inter', sans-serif;
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    .upload-preview {
-      display: none;
-      align-items: center;
-      gap: 16px;
-      padding: 16px;
-      background: #111;
-      border-radius: 10px;
-      margin-bottom: 32px;
-    }
-    .upload-preview.visible { display: flex; }
-
-    .preview-thumb {
-      width: 100px;
-      height: 100px;
-      object-fit: cover;
-      border-radius: 10px;
-      flex-shrink: 0;
-    }
-
-    .preview-filename {
-      font-family: 'Inter', sans-serif;
-      font-size: 13px;
-      color: var(--muted);
-      word-break: break-all;
-    }
-
-    /* ── SUBMIT BUTTON ───────────────────────────────────────────── */
-    .btn-submit {
-      width: 100%;
-      background: linear-gradient(135deg, #f04555 0%, #e63946 50%, #c82333 100%);
-      color: var(--text);
-      padding: 18px;
-      border-radius: 50px;
-      font-family: 'Inter', sans-serif;
-      font-size: 16px;
-      font-weight: 700;
-      border: none;
-      cursor: pointer;
-      box-shadow: 0 2px 14px rgba(230,57,70,0.35), inset 0 1px 0 rgba(255,255,255,0.18);
-      transition: filter 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      position: relative;
-      overflow: hidden;
-    }
-    .btn-submit::after {
-      content: ''; position: absolute;
-      top: 0; left: -80%; width: 50%; height: 100%;
-      background: linear-gradient(to right, transparent, rgba(255,255,255,0.22), transparent);
-      transform: skewX(-18deg);
-      transition: left .55s ease;
-    }
-    .btn-submit:hover:not(:disabled)::after { left: 140%; }
-    .btn-submit:hover:not(:disabled) {
-      filter: brightness(1.1);
-      transform: translateY(-1px);
-      box-shadow: 0 8px 28px rgba(230,57,70,0.50), inset 0 1px 0 rgba(255,255,255,0.18);
-    }
-    .btn-submit:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    /* CSS Spinner */
-    .spinner {
-      width: 18px;
-      height: 18px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      display: none;
-    }
-    .btn-submit.loading .spinner { display: block; }
-    .btn-submit.loading .btn-label { display: none; }
-    .btn-submit.loading .btn-label-loading { display: inline; }
-    .btn-label-loading { display: none; }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── SUCCESS CARD ────────────────────────────────────────────── */
-    .result-card {
-      display: none;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-left: 3px solid var(--accent);
-      border-radius: 16px;
-      padding: 40px;
-      margin-top: 24px;
-    }
-    .result-card.visible { display: block; }
-
-    .result-check {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: rgba(48, 209, 88, 0.15);
-      border: 1px solid #30d158;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      margin-bottom: 20px;
-    }
-
-    .result-created-label {
-      font-family: 'Inter', sans-serif;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--accent);
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-      display: block;
-    }
-
-    .result-auction-id {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 700;
-      font-size: 18px;
-      color: var(--text);
-      margin-bottom: 24px;
-      word-break: break-all;
-    }
-
-    .result-price-label {
-      font-family: 'Inter', sans-serif;
-      font-size: 12px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 4px;
-    }
-
-    .result-price {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 900;
-      font-size: 48px;
-      color: var(--accent);
-      line-height: 1;
-      margin-bottom: 24px;
-    }
-
-    .condition-label-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 8px;
-    }
-    .condition-label {
-      font-family: 'Inter', sans-serif;
-      font-size: 12px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    .condition-value {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 700;
-      font-size: 16px;
-      color: var(--text);
-    }
-
-    .condition-bar-track {
-      background: #1a1a1a;
-      border-radius: 50px;
-      height: 6px;
-      overflow: hidden;
-      margin-bottom: 32px;
-    }
-    .condition-bar-fill {
-      height: 100%;
-      background: var(--accent);
-      border-radius: 50px;
-      width: 0%;
-      transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    .btn-view-auctions {
-      display: inline-flex;
-      align-items: center;
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: 50px;
-      padding: 12px 24px;
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text);
-      text-decoration: none;
-      transition: border-color 0.25s ease;
-    }
-    .btn-view-auctions:hover { border-color: #555; }
-
-    /* ── ERROR CARD ──────────────────────────────────────────────── */
-    .error-card {
-      display: none;
-      background: rgba(255, 68, 68, 0.05);
-      border: 1px solid var(--border);
-      border-left: 3px solid #ff4444;
-      border-radius: 16px;
-      padding: 32px 40px;
-      margin-top: 24px;
-    }
-    .error-card.visible { display: block; }
-
-    .error-title {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 700;
-      font-size: 18px;
-      color: #ff4444;
-      margin-bottom: 8px;
-      text-transform: uppercase;
-    }
-
-    .error-msg {
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      color: var(--muted);
-      line-height: 1.6;
-    }
-
-    /* ── SIDEBAR ─────────────────────────────────────────────────── */
-    .sidebar {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .sidebar-card {
-      background: linear-gradient(160deg, #161616 0%, #111 100%);
-      border: 1px solid var(--border);
-      border-top: 2px solid var(--accent);
-      border-radius: 16px;
-      padding: 28px;
-    }
-
-    .sidebar-card-title {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 700;
-      font-size: 16px;
-      color: var(--accent);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 16px;
-    }
-
-    .sidebar-bullets {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .sidebar-bullets li {
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      color: var(--muted);
-      line-height: 1.5;
-      display: flex;
-      gap: 8px;
-    }
-    .sidebar-bullets li::before {
-      content: '→';
-      color: var(--accent);
-      flex-shrink: 0;
-      font-weight: 600;
-    }
-
-    .sidebar-para {
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      color: var(--muted);
-      line-height: 1.65;
-    }
-
-
-    /* ── DOT-GRID TEXTURE ────────────────────────────────────────── */
-    .dot-grid {
-      position: fixed; inset: 0; pointer-events: none; z-index: 0;
-      background-image: radial-gradient(rgba(255,255,255,0.028) 1px, transparent 1px);
-      background-size: 28px 28px;
-    }
-
-    /* ── RESPONSIVE ──────────────────────────────────────────────── */
-    @media (max-width: 768px) {
+    .btn-ghost-sm, .btn-link { color: var(--text); background: transparent; border: 1px solid var(--border); padding: 8px 20px; }
+    .btn-primary-sm, .btn-submit { color: var(--text); background: var(--accent); border: none; }
+    .btn-primary-sm { padding: 8px 20px; }
+    .page-hero { background: #000; padding: 100px 24px 44px; border-bottom: 1px solid #1a1a1a; text-align: center; }
+    .overline { font-size: 11px; font-weight: 600; color: var(--accent); letter-spacing: 3px; text-transform: uppercase; display: block; margin-bottom: 16px; }
+    .page-hero-heading { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: clamp(52px, 7vw, 84px); line-height: 0.92; text-transform: uppercase; }
+    .page-hero-sub { color: var(--muted); font-size: 16px; line-height: 1.6; max-width: 760px; margin: 18px auto 0; }
+    .main-content { padding: 48px 64px 80px; max-width: 1380px; margin: 0 auto; }
+    .content-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.8fr); gap: 28px; align-items: start; }
+    .form-card, .sidebar-card, .state-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 32px; }
+    .form-section-label, .sidebar-card-title { font-size: 11px; font-weight: 600; color: var(--accent); letter-spacing: 3px; text-transform: uppercase; display: block; margin-bottom: 22px; }
+    .fields-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .field-group { margin-bottom: 18px; }
+    .field-label { display: block; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    .field-input, .field-select { width: 100%; background: #090909; color: var(--text); border: 1px solid #232323; border-radius: 14px; padding: 16px; font-size: 15px; }
+    .field-input:focus, .field-select:focus { outline: none; border-color: var(--accent); }
+    .field-help { margin-top: 8px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .btn-submit { width: 100%; padding: 16px 24px; margin-top: 10px; }
+    .sidebar-card { display: grid; gap: 14px; }
+    .sidebar-bullets { list-style: none; display: grid; gap: 10px; }
+    .sidebar-bullets li { color: var(--muted); font-size: 14px; line-height: 1.55; display: flex; gap: 10px; }
+    .sidebar-bullets li::before { content: '→'; color: var(--accent); font-weight: 700; }
+    .state-card { display: none; margin-top: 18px; }
+    .state-card.visible { display: block; }
+    .state-title { font-family: 'Barlow Condensed', sans-serif; font-size: 30px; text-transform: uppercase; margin-bottom: 12px; }
+    .state-card.success { border-left: 3px solid var(--success); background: rgba(48,209,88,0.05); }
+    .state-card.error { border-left: 3px solid var(--danger); background: rgba(255,69,58,0.06); }
+    .state-card.success .state-title { color: var(--success); }
+    .state-card.error .state-title { color: var(--danger); }
+    .state-text { color: var(--muted); line-height: 1.7; font-size: 14px; }
+    .state-id { margin: 16px 0 20px; padding: 14px 16px; border: 1px solid #2a2a2a; border-radius: 14px; background: #090909; }
+    .state-id span { display: block; font-size: 11px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px; }
+    .state-id strong { font-family: 'Barlow Condensed', sans-serif; font-size: 36px; }
+    .state-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .user-chip { padding: 10px 16px; border-radius: 14px; border: 1px solid #232323; background: #090909; }
+    .user-chip span { display: block; font-size: 11px; color: var(--muted); letter-spacing: 1.4px; text-transform: uppercase; margin-bottom: 6px; }
+    .user-chip strong { font-family: 'Barlow Condensed', sans-serif; font-size: 32px; }
+    .hidden { display: none !important; }
+    @media (max-width: 960px) {
       nav { padding: 0 24px; }
       .nav-links { display: none; }
-      .main-content { padding: 40px 24px; }
-      .content-grid { grid-template-columns: 1fr; }
-      .form-card { padding: 28px 24px; }
-      .fields-row { grid-template-columns: 1fr; }
+      .main-content { padding: 36px 20px 64px; }
+      .content-grid, .fields-row { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-
-  <!-- NAV -->
   <nav>
     <a href="../index.html" class="nav-logo">SMug<span>Shotz</span></a>
     <div class="nav-links">
       <a href="../buyer-ui/index.html">Auctions</a>
-      <a href="../seller-ui/index.html" class="active">Sell</a>
+      <a href="./index.html" class="active">Create Auction</a>
       <a href="../profile.html">Profile</a>
     </div>
     <div class="nav-actions">
-      <a href="#" class="btn-ghost-sm">Sign In</a>
-      <a href="../buyer-ui/index.html" class="btn-primary-sm">Get Started</a>
+      <a href="./signup.html" class="btn-ghost-sm">Create Account</a>
+      <a href="../buyer-ui/index.html" class="btn-primary-sm">View Auctions</a>
     </div>
   </nav>
 
-  <!-- PAGE HERO -->
   <div class="page-hero">
-    <span class="overline">Sell</span>
-    <h1 class="page-hero-heading">List Your Camera</h1>
-    <p class="page-hero-sub">AI-powered pricing. Instant verification. Real buyers.</p>
+    <span class="overline">Create</span>
+    <h1 class="page-hero-heading">List a New Auction</h1>
+    <p class="page-hero-sub">Any signed-in user can create auctions and bid on other listings. Your user ID is prefilled below, and your auction will immediately show up in the cards view once created.</p>
   </div>
 
-  <!-- MAIN CONTENT -->
   <div class="main-content">
     <div class="content-grid">
-
-      <!-- FORM -->
       <div>
-        <div class="form-card">
-          <span class="form-section-label">Camera Details</span>
-
+        <div class="form-card" id="formCard">
+          <span class="form-section-label">Auction Details</span>
+          <div class="user-chip" style="margin-bottom:24px;">
+            <span>Logged In User</span>
+            <strong id="loggedInUserValue">—</strong>
+          </div>
           <form id="listingForm" novalidate>
-
-            <!-- Row 1: Seller ID + Model -->
             <div class="fields-row">
               <div class="field-group">
                 <label class="field-label" for="sellerId">Seller ID</label>
-                <input class="field-input" type="text" id="sellerId" name="seller_id" placeholder="e.g. USER-001" required />
+                <input class="field-input" type="number" id="sellerId" name="seller_id" min="1" required readonly />
+                <div class="field-help">This is auto-filled from the account you created earlier.</div>
               </div>
               <div class="field-group">
-                <label class="field-label" for="cameraModel">Camera Model</label>
-                <input class="field-input" type="text" id="cameraModel" name="camera_model" placeholder="e.g. Sony A7 IV" required />
+                <label class="field-label" for="cameraId">Camera ID</label>
+                <input class="field-input" type="number" id="cameraId" name="camera_id" placeholder="e.g. 101" min="1" required />
+                <div class="field-help">Use a placeholder camera ID for now while the camera details flow is still being finalised.</div>
               </div>
             </div>
-
-            <!-- Row 2: Shutter Count + Age -->
-            <div class="fields-row">
-              <div class="field-group">
-                <label class="field-label" for="shutterCount">Shutter Count</label>
-                <input class="field-input" type="number" id="shutterCount" name="shutter_count" placeholder="e.g. 12000" min="0" required />
-              </div>
-              <div class="field-group">
-                <label class="field-label" for="age">Age (years)</label>
-                <input class="field-input" type="number" id="age" name="age" placeholder="e.g. 2" min="0" step="0.1" required />
-              </div>
-            </div>
-
-            <!-- Row 3: Start Price + End Date -->
             <div class="fields-row">
               <div class="field-group">
                 <label class="field-label" for="startPrice">Start Price (SGD)</label>
-                <input class="field-input" type="number" id="startPrice" name="start_price" placeholder="e.g. 800" min="1" step="0.01" required />
+                <input class="field-input" type="number" id="startPrice" name="start_price" placeholder="e.g. 500" min="1" step="0.01" required />
               </div>
               <div class="field-group">
-                <label class="field-label" for="endDate">End Date &amp; Time</label>
+                <label class="field-label" for="endDate">End Date & Time</label>
                 <input class="field-input" type="datetime-local" id="endDate" name="end_time" required />
               </div>
             </div>
-
-            <hr class="form-divider" />
-
-            <!-- Image Upload -->
-            <span class="form-section-label">Camera Image</span>
-
-            <div class="upload-zone" id="uploadZone">
-              <input type="file" id="imageFile" name="image" accept="image/jpeg,image/png,image/webp" />
-              <span class="upload-icon">📷</span>
-              <div class="upload-title">Drop image here</div>
-              <div class="upload-hint">JPG, PNG up to 20MB</div>
-            </div>
-
-            <div class="upload-preview" id="uploadPreview">
-              <img class="preview-thumb" id="previewThumb" src="" alt="Preview" />
-              <span class="preview-filename" id="previewFilename"></span>
-            </div>
-
-            <button type="submit" class="btn-submit" id="submitBtn">
-              <div class="spinner"></div>
-              <span class="btn-label">Analyse &amp; List Camera</span>
-              <span class="btn-label-loading">Analysing Camera…</span>
-            </button>
-
+            <button type="submit" class="btn-submit" id="submitBtn">Create Auction</button>
           </form>
-
-          <!-- SUCCESS CARD -->
-          <div class="result-card" id="successCard">
-            <div class="result-check">✓</div>
-            <span class="result-created-label">Auction Created</span>
-            <div class="result-auction-id" id="resultAuctionId">—</div>
-            <div class="result-price-label">Suggested Start Price</div>
-            <div class="result-price" id="resultPrice">SGD —</div>
-            <div class="condition-label-row">
-              <span class="condition-label">Condition Score</span>
-              <span class="condition-value" id="resultConditionVal">—</span>
+          <div class="state-card success" id="successCard">
+            <div class="state-title">Auction Created</div>
+            <p class="state-text">Your auction was created successfully. You can now view it in the auction cards page and start accepting bids from other users.</p>
+            <div class="state-id"><span>Auction ID</span><strong id="resultAuctionId">—</strong></div>
+            <div class="state-actions">
+              <a href="../buyer-ui/index.html" class="btn-primary-sm">View Auctions</a>
+              <a href="./index.html" class="btn-link">Create Another</a>
             </div>
-            <div class="condition-bar-track">
-              <div class="condition-bar-fill" id="conditionBar"></div>
-            </div>
-            <a href="../buyer-ui/index.html" class="btn-view-auctions">View Live Auctions →</a>
           </div>
-
-          <!-- ERROR CARD -->
-          <div class="error-card" id="errorCard">
-            <div class="error-title">Submission Failed</div>
-            <p class="error-msg" id="errorMsg">An unexpected error occurred. Please try again.</p>
+          <div class="state-card error" id="errorCard">
+            <div class="state-title">Submission Failed</div>
+            <p class="state-text" id="errorMsg">Please try again.</p>
+          </div>
+          <div class="state-card error hidden" id="authCard">
+            <div class="state-title">Create an Account First</div>
+            <p class="state-text">We couldn't find a logged-in user in this browser yet. Create your account first so we can attach the correct seller ID to this auction.</p>
+            <div class="state-actions" style="margin-top:18px;">
+              <a href="./signup.html" class="btn-primary-sm">Create Account</a>
+              <a href="../buyer-ui/index.html" class="btn-link">Browse Auctions</a>
+            </div>
           </div>
         </div>
       </div>
-
-      <!-- SIDEBAR -->
       <div class="sidebar">
         <div class="sidebar-card">
-          <div class="sidebar-card-title">Why List With Us</div>
+          <div class="sidebar-card-title">How This Page Works</div>
           <ul class="sidebar-bullets">
-            <li>AI condition scoring gives buyers confidence and you a fair price</li>
-            <li>Real-time bidding drives competition and higher final prices</li>
-            <li>Stripe-secured payments — funds released only on delivery confirmation</li>
+            <li>Every user can now both create auctions and place bids.</li>
+            <li>The seller ID is automatically taken from the account you created on this browser.</li>
+            <li>Cards are imageless for now, but the listing flow is ready for the rest of the camera details later.</li>
           </ul>
         </div>
         <div class="sidebar-card">
-          <div class="sidebar-card-title">Listing Tips</div>
+          <div class="sidebar-card-title">Current Inputs</div>
           <ul class="sidebar-bullets">
-            <li>Use a clean, well-lit photo against a neutral background</li>
-            <li>Enter accurate shutter count — buyers can verify with serial number</li>
-            <li>Set a 7-day auction window for maximum bidder reach</li>
+            <li>Camera ID is still manual for now.</li>
+            <li>Start price and end time are sent to the current Create Auction API.</li>
+            <li>Once created, the auction can be viewed and bid on from the auctions page.</li>
           </ul>
-        </div>
-        <div class="sidebar-card">
-          <div class="sidebar-card-title">Seller Protection</div>
-          <p class="sidebar-para">All funds are held securely in escrow via Stripe until the buyer confirms receipt in good condition. SMugShotz mediates all disputes, and sellers are fully protected against fraudulent claims.</p>
         </div>
       </div>
-
     </div>
   </div>
 
   <script>
-    // Set default end time to 7 days from now
-    (function setDefaultEndTime() {
-      const endDateInput = document.getElementById('endDate');
-      const sevenDays = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-      // Format: YYYY-MM-DDTHH:MM
-      const pad = n => String(n).padStart(2, '0');
-      const formatted = `${sevenDays.getFullYear()}-${pad(sevenDays.getMonth() + 1)}-${pad(sevenDays.getDate())}T${pad(sevenDays.getHours())}:${pad(sevenDays.getMinutes())}`;
-      endDateInput.value = formatted;
-    })();
+    const STORAGE_KEY = 'smugshotz_user';
+    const API_URL = 'https://personal-vsev7crp.outsystemscloud.com/CreateAuction/rest/CreateAuctionAPI/auction/create';
 
-    // Image preview
-    const imageFile = document.getElementById('imageFile');
-    const uploadPreview = document.getElementById('uploadPreview');
-    const previewThumb = document.getElementById('previewThumb');
-    const previewFilename = document.getElementById('previewFilename');
-    const uploadZone = document.getElementById('uploadZone');
-
-    imageFile.addEventListener('change', function () {
-      const file = this.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = e => {
-        previewThumb.src = e.target.result;
-        previewFilename.textContent = file.name;
-        uploadPreview.classList.add('visible');
-        uploadZone.style.display = 'none';
-      };
-      reader.readAsDataURL(file);
-    });
-
-    // Drag-over styling
-    uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
-    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
-    uploadZone.addEventListener('drop', e => {
-      e.preventDefault();
-      uploadZone.classList.remove('drag-over');
-      const file = e.dataTransfer.files[0];
-      if (file) {
-        const dt = new DataTransfer();
-        dt.items.add(file);
-        imageFile.files = dt.files;
-        imageFile.dispatchEvent(new Event('change'));
-      }
-    });
-
-    // Form submission
     const listingForm = document.getElementById('listingForm');
     const submitBtn = document.getElementById('submitBtn');
     const successCard = document.getElementById('successCard');
     const errorCard = document.getElementById('errorCard');
+    const authCard = document.getElementById('authCard');
+    const errorMsg = document.getElementById('errorMsg');
+    const sellerIdInput = document.getElementById('sellerId');
+    const loggedInUserValue = document.getElementById('loggedInUserValue');
+
+    (function setDefaultEndTime() {
+      const endDateInput = document.getElementById('endDate');
+      const threeDays = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+      const pad = n => String(n).padStart(2, '0');
+      endDateInput.value = `${threeDays.getFullYear()}-${pad(threeDays.getMonth() + 1)}-${pad(threeDays.getDate())}T${pad(threeDays.getHours())}:${pad(threeDays.getMinutes())}`;
+    })();
+
+    function getStoredUser() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+      } catch (_) {
+        return null;
+      }
+    }
+
+    const storedUser = getStoredUser();
+    if (storedUser && storedUser.user_id) {
+      sellerIdInput.value = storedUser.user_id;
+      loggedInUserValue.textContent = storedUser.user_id;
+    } else {
+      loggedInUserValue.textContent = '—';
+      listingForm.classList.add('hidden');
+      authCard.classList.remove('hidden');
+      authCard.classList.add('visible');
+    }
 
     listingForm.addEventListener('submit', async function (e) {
       e.preventDefault();
-
-      // Hide previous results
       successCard.classList.remove('visible');
       errorCard.classList.remove('visible');
 
-      // Show loading state
-      submitBtn.classList.add('loading');
-      submitBtn.disabled = true;
+      const payload = {
+        seller_id: Number(sellerIdInput.value),
+        camera_id: Number(document.getElementById('cameraId').value),
+        start_price: Number(document.getElementById('startPrice').value),
+        end_time: document.getElementById('endDate').value
+      };
 
-      const formData = new FormData(listingForm);
+      if (!payload.seller_id || !payload.camera_id || !payload.start_price || !payload.end_time) {
+        errorMsg.textContent = 'Please fill in all fields before creating the auction.';
+        errorCard.classList.add('visible');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating Auction…';
 
       try {
-        const response = await fetch('http://localhost/auction/create', {
+        const response = await fetch(API_URL, {
           method: 'POST',
-          body: formData
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
         });
 
-        if (response.status === 201) {
-          const data = await response.json();
-          // Populate success card
-          document.getElementById('resultAuctionId').textContent = data.auction_id || data.id || 'Created Successfully';
-          const suggestedPrice = data.suggested_price || data.start_price || '—';
-          document.getElementById('resultPrice').textContent = suggestedPrice !== '—' ? `SGD ${Number(suggestedPrice).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—';
-          const conditionScore = data.condition_score ?? null;
-          if (conditionScore !== null) {
-            const pct = Math.round(conditionScore * 100);
-            document.getElementById('resultConditionVal').textContent = `${pct}/100`;
-            setTimeout(() => {
-              document.getElementById('conditionBar').style.width = `${pct}%`;
-            }, 50);
-          } else {
-            document.getElementById('resultConditionVal').textContent = 'N/A';
-          }
+        let data = {};
+        try { data = await response.json(); } catch (_) {}
+
+        if (response.ok || response.status === 201) {
+          const auctionId = data.auction_id || data?.data?.auction_id || 'Created';
+          document.getElementById('resultAuctionId').textContent = auctionId;
           successCard.classList.add('visible');
-          successCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          listingForm.reset();
+          sellerIdInput.value = storedUser.user_id;
+          document.getElementById('cameraId').focus();
         } else {
-          let errMsg = `Server returned status ${response.status}.`;
-          try {
-            const errData = await response.json();
-            errMsg = errData.message || errData.error || errMsg;
-          } catch (_) {}
-          document.getElementById('errorMsg').textContent = errMsg;
+          errorMsg.textContent = data?.error || data?.message || `Server returned status ${response.status}.`;
           errorCard.classList.add('visible');
-          errorCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
       } catch (err) {
-        document.getElementById('errorMsg').textContent = err.message || 'Network error. Please check your connection and try again.';
+        errorMsg.textContent = err.message || 'Network error. Please try again.';
         errorCard.classList.add('visible');
-        errorCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       } finally {
-        submitBtn.classList.remove('loading');
         submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Auction';
       }
     });
   </script>

@@ -23,7 +23,33 @@ CORS(app)
 USER_SERVICE = os.environ.get("USER_SERVICE_URL", "http://user:5001")
 AUCTION_SERVICE = os.environ.get("AUCTION_SERVICE_URL", "http://auction:5003")
 RABBITMQ_URL = os.environ.get("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/")
+NOTIFICATION_SERVICE = os.environ.get(
+    "NOTIFICATION_SERVICE_URL",
+    "https://personal-vsev7crp.outsystemscloud.com/Notification/rest/Notification"
+)
+def send_bid_notification(chat_id, auction_id: int, bidder_id: int, bid_amount: float):
+    payload = {
+        "chat_id": chat_id,
+        "auction_id": auction_id,
+        "bidder_id": bidder_id,
+        "bid_amount": bid_amount,
+    }
 
+    print("DEBUG notification URL:", f"{NOTIFICATION_SERVICE}/bid")
+    print("DEBUG notification payload:", payload)
+
+    try:
+        resp = http.post(f"{NOTIFICATION_SERVICE}/bid", json=payload, timeout=5)
+        print("DEBUG notification status:", resp.status_code)
+        print("DEBUG notification response:", resp.text)
+
+        if resp.status_code not in (200, 201, 204):
+            app.logger.warning(
+                f"Notification service returned {resp.status_code}: {resp.text}"
+            )
+    except http.RequestException as exc:
+        print("DEBUG notification exception:", str(exc))
+        app.logger.warning(f"Failed to call notification service: {exc}")
 
 def publish_event(event_type: str, payload: dict):
     try:
@@ -42,32 +68,151 @@ def publish_event(event_type: str, payload: dict):
         app.logger.warning(f"Failed to publish {event_type}: {e}")
 
 
+def extract_data(payload: dict) -> dict:
+    if not isinstance(payload, dict):
+        return {}
+    data = payload.get("data")
+    return data if isinstance(data, dict) else payload
+
+
+def parse_service_payload(resp, service_name: str):
+    try:
+        return extract_data(resp.json()), None
+    except ValueError:
+        return None, (
+            jsonify({"error": f"{service_name} returned a non-JSON response"}),
+            502,
+        )
+
+
+def get_user(user_id: int):
+    try:
+        resp = http.get(f"{USER_SERVICE}/user/{user_id}", timeout=5)
+    except http.RequestException as exc:
+        return None, (jsonify({"error": f"Failed to reach user service: {exc}"}), 502)
+
+    if resp.status_code != 200:
+        return None, (jsonify({"error": "User not found"}), 400)
+
+    user, parse_error = parse_service_payload(resp, "User service")
+    if parse_error:
+        return None, parse_error
+
+    required_fields = ("role",)
+    missing_fields = [field for field in required_fields if field not in user]
+    if missing_fields:
+        return None, (
+            jsonify(
+                {
+                    "error": "User service returned an invalid payload",
+                    "missing_fields": missing_fields,
+                }
+            ),
+            502,
+        )
+
+    return user, None
+
+
+def get_auction(auction_id: int):
+    try:
+        resp = http.get(f"{AUCTION_SERVICE}/auction/{auction_id}/", timeout=5)
+    except http.RequestException as exc:
+        return None, (jsonify({"error": f"Failed to reach auction service: {exc}"}), 502)
+
+    if resp.status_code != 200:
+        return None, (jsonify({"error": "Auction not found"}), 404)
+
+    auction, parse_error = parse_service_payload(resp, "Auction service")
+    if parse_error:
+        return None, parse_error
+
+    required_fields = (
+        "auction_id",
+        "start_price",
+        "status",
+    )
+    missing_fields = [field for field in required_fields if field not in auction]
+    if missing_fields:
+        return None, (
+            jsonify(
+                {
+                    "error": "Auction service returned an invalid payload",
+                    "missing_fields": missing_fields,
+                }
+            ),
+            502,
+        )
+
+    # Outsystems may omit bid fields when an auction has not received any bids yet.
+    auction.setdefault("current_highest_bid", 0)
+    auction.setdefault("highest_bidder_id", None)
+
+    return auction, None
+
+
+def update_auction(auction: dict, bid_amount: float, bidder_id: int):
+    update_payload = {
+        "auction_id": auction["auction_id"],
+        "current_highest_bid": bid_amount,
+        "highest_bidder_id": bidder_id,
+        "status": auction["status"],
+    }
+
+    try:
+       resp = http.put(
+    "https://personal-vsev7crp.outsystemscloud.com/Auction/rest/Auction/Auction",
+    json=update_payload,
+    timeout=5
+   )
+    except http.RequestException as exc:
+        return None, (jsonify({"error": f"Failed to update auction: {exc}"}), 502)
+
+    if resp.status_code not in (200, 201, 204):
+        return None, (jsonify({"error": "Failed to update auction"}), 500)
+
+    if resp.status_code == 204 or not resp.content:
+        return update_payload, None
+
+    updated_auction, parse_error = parse_service_payload(resp, "Auction service")
+    if parse_error:
+        return None, parse_error
+
+    return updated_auction, None
+
+
 @app.route("/bid", methods=["POST"])
 def process_bid():
     data = request.json
-    if not data or not all(k in data for k in ("auction_id", "bidder_id", "bid_amount")):
+    if not data:
+        return jsonify({"error": "Missing required fields"}), 400
+
+    bidder_id = data.get("bidder_id", data.get("buyer_id"))
+    if not all(value is not None for value in (data.get("auction_id"), bidder_id, data.get("bid_amount"))):
         return jsonify({"error": "Missing required fields"}), 400
 
     auction_id = data["auction_id"]
-    bidder_id = data["bidder_id"]
-    bid_amount = float(data["bid_amount"])
+    try:
+        bid_amount = float(data["bid_amount"])
+    except (TypeError, ValueError):
+        return jsonify({"error": "bid_amount must be numeric"}), 400
 
     # 1. Validate bidder
-    user_resp = http.get(f"{USER_SERVICE}/user/{bidder_id}", timeout=5)
-    if user_resp.status_code != 200:
-        return jsonify({"error": "User not found"}), 400
-    bidder = user_resp.json()
-    if bidder.get("role") != "buyer":
-        return jsonify({"error": "User is not a buyer"}), 403
+    bidder, user_error = get_user(bidder_id)
+    if user_error:
+        return user_error
+
+    #if str(bidder.get("role", "")).lower() != "buyer":
+      #return jsonify({"error": "User is not a buyer"}), 403**
 
     # 2. Fetch auction
-    auc_resp = http.get(f"{AUCTION_SERVICE}/auction/{auction_id}", timeout=5)
-    if auc_resp.status_code != 200:
-        return jsonify({"error": "Auction not found"}), 404
-    auction = auc_resp.json()
+    auction, auction_error = get_auction(auction_id)
+    if auction_error:
+        return auction_error
 
     # 3. Validate bid
-    if auction["status"] != "active":
+    active_statuses = {"OPEN", "ACTIVE"}
+    if str(auction["status"]).upper() not in active_statuses:
         return jsonify({"error": "Auction is not active"}), 400
 
     min_bid = max(auction["start_price"], auction["current_highest_bid"])
@@ -79,39 +224,29 @@ def process_bid():
     previous_bidder_id = auction.get("highest_bidder_id")
 
     # 4. Update auction
-    update_resp = http.put(
-        f"{AUCTION_SERVICE}/auction/{auction_id}",
-        json={"current_highest_bid": bid_amount, "highest_bidder_id": bidder_id},
-        timeout=5,
-    )
-    if update_resp.status_code != 200:
-        return jsonify({"error": "Failed to update auction"}), 500
+    _, update_error = update_auction(auction, bid_amount, bidder_id)
+    if update_error:
+        return update_error
 
     # 5a. Notify outbid previous bidder
     if previous_bidder_id and previous_bidder_id != bidder_id:
-        prev_resp = http.get(f"{USER_SERVICE}/user/{previous_bidder_id}", timeout=5)
-        if prev_resp.status_code == 200:
-            prev_user = prev_resp.json()
-            publish_event(
-                "bid.outbid",
-                {
-                    "auction_id": auction_id,
-                    "outbid_user_id": previous_bidder_id,
-                    "outbid_telegram": prev_user.get("telegram_handle"),
-                    "new_highest_bid": bid_amount,
-                },
+        prev_user, _ = get_user(previous_bidder_id)
+        if prev_user and prev_user.get("telegram_chat_id"):
+            send_bid_notification(
+                chat_id=prev_user["telegram_chat_id"],
+                auction_id=auction_id,
+                bidder_id=previous_bidder_id,
+                bid_amount=bid_amount,
             )
 
     # 5b. Confirm new bid
-    publish_event(
-        "bid.confirmed",
-        {
-            "auction_id": auction_id,
-            "bidder_id": bidder_id,
-            "bidder_telegram": bidder.get("telegram_handle"),
-            "bid_amount": bid_amount,
-        },
-    )
+    if bidder.get("telegram_chat_id"):
+        send_bid_notification(
+            chat_id=bidder["telegram_chat_id"],
+            auction_id=auction_id,
+            bidder_id=bidder_id,
+            bid_amount=bid_amount,
+        )
 
     return jsonify(
         {
