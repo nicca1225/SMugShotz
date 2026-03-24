@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="js/zoom-persist.js"></script>
+  <title>Profile — SMugShotz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #000000;
+      --surface: #0f0f0f;
+      --surface-2: #1a1a1a;
+      --accent: #e63946;
+      --text: #ffffff;
+      --muted: #6e6e73;
+      --border: #222222;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-weight: 400;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ─────────────────────────────────────────────────────── */
+    nav {
+      position: fixed;
+      top: 0;
+      z-index: 100;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.88);
+      backdrop-filter: blur(28px) saturate(160%);
+      -webkit-backdrop-filter: blur(28px) saturate(160%);
+      border-bottom: none;
+      height: 60px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      padding: 0 48px;
+    }
+    nav::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, rgba(230,57,70,0.5) 50%, transparent 100%);
+    }
+    .nav-logo {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 22px;
+      color: var(--text);
+      text-decoration: none;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      justify-self: start;
+    }
+    .nav-logo span { color: var(--accent); text-shadow: 0 0 18px rgba(230,57,70,0.55); }
+    .nav-links {
+      display: flex;
+      gap: 40px;
+      align-items: center;
+    }
+    .nav-links a {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      position: relative;
+      transition: color 0.25s ease;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px; left: 0;
+      width: 0; height: 1px;
+      background: var(--accent);
+      transition: width 0.3s ease;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a:hover::after { width: 100%; }
+    .nav-links a.nav-active { color: var(--text); }
+    .nav-links a.nav-active::after { width: 100%; }
+    .nav-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-self: end;
+    }
+    .btn-ghost {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 50px;
+      padding: 8px 20px;
+      cursor: pointer;
+      text-decoration: none;
+      letter-spacing: 0.3px;
+      transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+    }
+    .btn-ghost:hover {
+      background: rgba(255,255,255,0.09);
+      border-color: rgba(255,255,255,0.32);
+      color: #fff;
+    }
+    .btn-primary {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      background: linear-gradient(135deg, #f04555 0%, #e63946 50%, #c82333 100%);
+      border: none;
+      border-radius: 50px;
+      padding: 8px 22px;
+      cursor: pointer;
+      text-decoration: none;
+      letter-spacing: 0.3px;
+      box-shadow: 0 2px 14px rgba(230,57,70,0.35), inset 0 1px 0 rgba(255,255,255,0.18);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-primary:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(230,57,70,0.50), inset 0 1px 0 rgba(255,255,255,0.18);
+    }
+
+    /* ── SHARED SECTION LABELS ───────────────────────────────────── */
+    .overline {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    /* ── DOT-GRID TEXTURE ────────────────────────────────────────── */
+    .dot-grid {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image: radial-gradient(rgba(255,255,255,0.028) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+
+    /* ── PAGE HEADER ─────────────────────────────────────────────── */
+    .page-header {
+      padding-top: 60px; /* nav height */
+      background: linear-gradient(180deg, #0a0a0a 0%, var(--bg) 100%);
+      border-bottom: 1px solid var(--border);
+    }
+    .page-header-inner {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 48px 32px 36px;
+    }
+    .page-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 48px;
+      color: var(--text);
+      text-transform: uppercase;
+      line-height: 1;
+      letter-spacing: -1px;
+    }
+
+    /* ── PROFILE MAIN ────────────────────────────────────────────── */
+    .profile-main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 48px 32px 120px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── PROFILE CARD ────────────────────────────────────────────── */
+    .profile-card {
+      background: linear-gradient(160deg, #161616 0%, #111 100%);
+      border: 1px solid var(--border);
+      border-top: 2px solid var(--accent);
+      border-radius: 16px;
+      padding: 36px 40px;
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .profile-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 20%; right: 20%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(230,57,70,0.6), transparent);
+      filter: blur(1px);
+    }
+    .profile-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f04555 0%, #e63946 50%, #c82333 100%);
+      box-shadow: 0 0 24px rgba(230,57,70,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 32px;
+      color: var(--text);
+      flex-shrink: 0;
+    }
+    .profile-info {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .profile-name-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .profile-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 28px;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      line-height: 1;
+    }
+    .role-badge {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 50px;
+    }
+    .badge-seller {
+      background: rgba(184,134,11,0.15);
+      color: #d4a017;
+      border: 1px solid rgba(184,134,11,0.35);
+    }
+    .badge-buyer {
+      background: rgba(13,148,136,0.15);
+      color: #2dd4bf;
+      border: 1px solid rgba(13,148,136,0.35);
+    }
+    .profile-meta {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .meta-sep { color: #333; }
+    .telegram-link {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: #2dd4bf;
+      text-decoration: none;
+      letter-spacing: 0.3px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s ease;
+      width: fit-content;
+    }
+    .telegram-link::before {
+      content: '↗';
+      font-size: 11px;
+      opacity: 0.7;
+    }
+    .telegram-link:hover { color: #5eead4; }
+
+    /* ── PROFILE SECTIONS ────────────────────────────────────────── */
+    .profile-section {
+      background: linear-gradient(160deg, #161616 0%, #111 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px 40px;
+    }
+    .section-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 28px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── EDIT FORM ───────────────────────────────────────────────── */
+    .edit-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      align-items: center;
+      gap: 16px;
+    }
+    .form-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .form-input {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      color: var(--text);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color 0.2s ease, background 0.2s ease;
+      width: 100%;
+    }
+    .form-input:focus {
+      border-color: rgba(230,57,70,0.55);
+      background: rgba(255,255,255,0.06);
+    }
+    .form-input::placeholder { color: #3a3a3a; }
+    .form-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding-top: 4px;
+      padding-left: calc(140px + 16px); /* align with inputs */
+    }
+    .form-status {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .form-status.success { color: #4ade80; }
+    .form-status.warning { color: #facc15; }
+
+    /* ── AUCTION / BID LIST ──────────────────────────────────────── */
+    .items-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+    .list-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 20px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      gap: 16px;
+      transition: background 0.2s ease, border-color 0.2s ease;
+      margin-bottom: 8px;
+    }
+    .list-item:hover {
+      background: rgba(255,255,255,0.04);
+      border-color: #333;
+    }
+    .list-item:last-child { margin-bottom: 0; }
+    .list-item-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .list-item-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 17px;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .list-item-meta {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .list-item-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+    }
+    .list-item-bid {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--text);
+    }
+    .status-badge {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 50px;
+    }
+    .badge-active {
+      background: rgba(74,222,128,0.12);
+      color: #4ade80;
+      border: 1px solid rgba(74,222,128,0.3);
+    }
+    .badge-failed {
+      background: rgba(230,57,70,0.12);
+      color: #f87171;
+      border: 1px solid rgba(230,57,70,0.3);
+    }
+    .badge-completed {
+      background: rgba(110,110,115,0.12);
+      color: var(--muted);
+      border: 1px solid rgba(110,110,115,0.3);
+    }
+    .empty-state {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      color: var(--muted);
+      text-align: center;
+      padding: 32px 0;
+    }
+
+    /* ── SCROLL FADE-UP ──────────────────────────────────────────── */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity .6s ease, transform .6s ease;
+    }
+    .fade-up.visible { opacity: 1; transform: none; }
+
+    /* ── RESPONSIVE ──────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      nav { padding: 0 24px; }
+      .nav-links { display: none; }
+      .page-header-inner { padding: 40px 20px 28px; }
+      .profile-main { padding: 32px 20px 80px; }
+      .profile-card { flex-direction: column; align-items: flex-start; padding: 28px 24px; }
+      .profile-section { padding: 28px 24px; }
+      .form-row { grid-template-columns: 1fr; gap: 8px; }
+      .form-actions { padding-left: 0; }
+      .list-item { flex-direction: column; align-items: flex-start; }
+      .list-item-right { width: 100%; justify-content: space-between; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="index.html" class="nav-logo">SMug<span>Shotz</span></a>
+    <div class="nav-links">
+      <a href="buyer-ui/index.html">Auctions</a>
+      <a href="seller-ui/index.html">Sell</a>
+      <a href="profile.html" class="nav-active">Profile</a>
+    </div>
+    <div class="nav-actions">
+      <a href="#" class="btn-ghost">Sign In</a>
+      <a href="buyer-ui/index.html" class="btn-primary">Get Started</a>
+    </div>
+  </nav>
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div class="page-header-inner">
+      <span class="overline">Account</span>
+      <h1 class="page-title">Your Profile</h1>
+    </div>
+  </div>
+
+  <!-- PROFILE CONTENT -->
+  <main class="profile-main">
+
+    <!-- PROFILE CARD -->
+    <section class="profile-card fade-up">
+      <div class="profile-avatar" id="profileAvatar">—</div>
+      <div class="profile-info">
+        <div class="profile-name-row">
+          <h2 class="profile-name" id="profileName">Loading…</h2>
+        </div>
+        <div class="profile-meta">
+          <span id="profileEmail"></span>
+          <span class="meta-sep">·</span>
+          <span>Member since <span id="profileSince"></span></span>
+        </div>
+        <a class="telegram-link" id="telegramLink" href="#" target="_blank"></a>
+      </div>
+    </section>
+
+    <!-- EDIT PROFILE FORM -->
+    <section class="profile-section fade-up">
+      <h3 class="section-label">Edit Profile</h3>
+      <form class="edit-form" id="editForm">
+        <div class="form-row">
+          <label class="form-label" for="editName">Name</label>
+          <input class="form-input" id="editName" type="text" placeholder="Your name" required />
+        </div>
+        <div class="form-row">
+          <label class="form-label" for="editEmail">Email</label>
+          <input class="form-input" id="editEmail" type="email" placeholder="you@example.com" required />
+        </div>
+        <div class="form-row">
+          <label class="form-label" for="editTelegram">Telegram</label>
+          <input class="form-input" id="editTelegram" type="text" placeholder="@handle" />
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Save Changes</button>
+          <span class="form-status" id="formStatus"></span>
+        </div>
+      </form>
+    </section>
+
+    <!-- MY AUCTIONS — sellers only -->
+    <section class="profile-section fade-up" id="auctionsPanel" style="display:none">
+      <h3 class="section-label">My Auctions</h3>
+      <div id="auctionsList" class="items-list"></div>
+    </section>
+
+    <!-- MY BIDS — buyers only -->
+    <section class="profile-section fade-up" id="bidsPanel" style="display:none">
+      <h3 class="section-label">My Bids</h3>
+      <div id="bidsList" class="items-list"></div>
+    </section>
+
+  </main>
+
+  <!-- Dot-grid texture -->
+  <div class="dot-grid"></div>
+
+<script>
+const API = 'http://localhost';
+
+/* ── MOCK DATA (fallback when API is offline) ─────────────────── */
+const MOCK_USER = {
+  user_id: 1,
+  name: 'Alex Tan',
+  email: 'alex.tan@example.com',
+  telegram_handle: '@alextan',
+  role: 'seller',
+  created_at: '2024-03-15T00:00:00Z'
+};
+
+const MOCK_AUCTIONS = [
+  {
+    auction_id: 101,
+    camera_model: 'Fujifilm GFX100 II',
+    current_bid: 8500,
+    end_time: new Date(Date.now() + 3600000 * 26).toISOString(),
+    status: 'active'
+  },
+  {
+    auction_id: 102,
+    camera_model: 'Leica M11 Monochrom',
+    current_bid: 12200,
+    end_time: new Date(Date.now() + 3600000 * 4).toISOString(),
+    status: 'active'
+  },
+  {
+    auction_id: 98,
+    camera_model: 'Sony A7R V',
+    current_bid: 3800,
+    end_time: new Date(Date.now() - 86400000).toISOString(),
+    status: 'completed'
+  }
+];
+
+const MOCK_BIDS = [
+  {
+    auction_id: 205,
+    camera_model: 'Hasselblad X2D 100C',
+    your_bid: 9200,
+    current_bid: 9200,
+    end_time: new Date(Date.now() + 3600000 * 11).toISOString(),
+    is_winning: true
+  },
+  {
+    auction_id: 210,
+    camera_model: 'Canon EOS R3',
+    your_bid: 4500,
+    current_bid: 4900,
+    end_time: new Date(Date.now() + 3600000 * 2).toISOString(),
+    is_winning: false
+  },
+  {
+    auction_id: 188,
+    camera_model: 'Nikon Z9',
+    your_bid: 5100,
+    current_bid: 5100,
+    end_time: new Date(Date.now() - 3600000 * 48).toISOString(),
+    is_winning: false
+  }
+];
+
+/* ── AUTH TOKEN ───────────────────────────────────────────────── */
+function getToken() {
+  return localStorage.getItem('token') || 'demo-token';
+}
+
+/* ── API HELPERS (graceful fallback) ─────────────────────────── */
+async function fetchUser() {
+  const userId = localStorage.getItem('user_id') || 1;
+  try {
+    const res = await fetch(`${API}/user/${userId}`, {
+      headers: { 'Authorization': `Bearer ${getToken()}` }
+    });
+    if (!res.ok) throw new Error('non-2xx');
+    return await res.json();
+  } catch {
+    return MOCK_USER;
+  }
+}
+
+async function fetchAuctions(userId) {
+  try {
+    const res = await fetch(`${API}/auction?seller_id=${userId}`, {
+      headers: { 'Authorization': `Bearer ${getToken()}` }
+    });
+    if (!res.ok) throw new Error('non-2xx');
+    return await res.json();
+  } catch {
+    return MOCK_AUCTIONS;
+  }
+}
+
+async function fetchBids(userId) {
+  try {
+    const res = await fetch(`${API}/auction?bidder_id=${userId}`, {
+      headers: { 'Authorization': `Bearer ${getToken()}` }
+    });
+    if (!res.ok) throw new Error('non-2xx');
+    return await res.json();
+  } catch {
+    return MOCK_BIDS;
+  }
+}
+
+/* ── HELPERS ──────────────────────────────────────────────────── */
+function timeRemaining(endTime) {
+  const diff = new Date(endTime) - Date.now();
+  if (diff <= 0) return 'Ended';
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  return h >= 24 ? `${Math.floor(h / 24)}d ${h % 24}h left` : `${h}h ${m}m left`;
+}
+
+function statusBadgeClass(status) {
+  return { active: 'badge-active', failed: 'badge-failed', completed: 'badge-completed' }[status] ?? 'badge-completed';
+}
+
+let currentUser = null;
+
+/* ── RENDER PROFILE CARD ──────────────────────────────────────── */
+function renderProfile(user) {
+  const initial = (user.name || '?').charAt(0).toUpperCase();
+  document.getElementById('profileAvatar').textContent = initial;
+  document.getElementById('profileName').textContent = user.name;
+  document.getElementById('profileEmail').textContent = user.email;
+  document.getElementById('profileSince').textContent = new Date(user.created_at)
+    .toLocaleDateString('en-SG', { year: 'numeric', month: 'long' });
+
+  const handle = user.telegram_handle
+    ? (user.telegram_handle.startsWith('@') ? user.telegram_handle : '@' + user.telegram_handle)
+    : null;
+  const tgEl = document.getElementById('telegramLink');
+  if (handle) {
+    tgEl.textContent = handle;
+    tgEl.href = `https://t.me/${handle.slice(1)}`;
+    tgEl.style.display = '';
+  } else {
+    tgEl.style.display = 'none';
+  }
+
+  document.getElementById('editName').value = user.name;
+  document.getElementById('editEmail').value = user.email;
+  document.getElementById('editTelegram').value = user.telegram_handle || '';
+}
+
+/* ── RENDER AUCTIONS ──────────────────────────────────────────── */
+function renderAuctions(auctions) {
+  const panel = document.getElementById('auctionsPanel');
+  const list  = document.getElementById('auctionsList');
+  panel.style.display = '';
+
+  if (!auctions || !auctions.length) {
+    list.innerHTML = '<p class="empty-state">No auctions yet. <a href="seller-ui/index.html" style="color:var(--accent)">List a camera →</a></p>';
+    return;
+  }
+
+  list.innerHTML = auctions.map(a => `
+    <div class="list-item">
+      <div class="list-item-info">
+        <div class="list-item-title">${a.camera_model}</div>
+        <div class="list-item-meta">${timeRemaining(a.end_time)}</div>
+      </div>
+      <div class="list-item-right">
+        <div class="list-item-bid">SGD ${Number(a.current_bid).toLocaleString()}</div>
+        <span class="status-badge ${statusBadgeClass(a.status)}">${a.status}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ── RENDER BIDS ──────────────────────────────────────────────── */
+function renderBids(bids) {
+  const panel = document.getElementById('bidsPanel');
+  const list  = document.getElementById('bidsList');
+  panel.style.display = '';
+
+  if (!bids || !bids.length) {
+    list.innerHTML = '<p class="empty-state">No bids yet. <a href="buyer-ui/index.html" style="color:var(--accent)">Browse auctions →</a></p>';
+    return;
+  }
+
+  list.innerHTML = bids.map(b => `
+    <div class="list-item">
+      <div class="list-item-info">
+        <div class="list-item-title">${b.camera_model}</div>
+        <div class="list-item-meta">Highest: SGD ${Number(b.current_bid).toLocaleString()} · ${timeRemaining(b.end_time)}</div>
+      </div>
+      <div class="list-item-right">
+        <div class="list-item-bid">Your bid: SGD ${Number(b.your_bid).toLocaleString()}</div>
+        <span class="status-badge ${b.is_winning ? 'badge-active' : 'badge-failed'}">${b.is_winning ? 'Winning' : 'Outbid'}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ── EDIT FORM SUBMIT ─────────────────────────────────────────── */
+document.getElementById('editForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const statusEl = document.getElementById('formStatus');
+  const payload = {
+    name: document.getElementById('editName').value.trim(),
+    email: document.getElementById('editEmail').value.trim(),
+    telegram_handle: document.getElementById('editTelegram').value.trim()
+  };
+
+  try {
+    const res = await fetch(`${API}/user/${currentUser.user_id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getToken()}`
+      },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('non-2xx');
+    currentUser = { ...currentUser, ...payload };
+    renderProfile(currentUser);
+    statusEl.textContent = 'Changes saved.';
+    statusEl.className = 'form-status success';
+  } catch {
+    currentUser = { ...currentUser, ...payload };
+    renderProfile(currentUser);
+    statusEl.textContent = 'Saved locally (API offline).';
+    statusEl.className = 'form-status warning';
+  }
+
+  setTimeout(() => { statusEl.textContent = ''; statusEl.className = 'form-status'; }, 3000);
+});
+
+/* ── INIT ─────────────────────────────────────────────────────── */
+async function init() {
+  const user = await fetchUser();
+  currentUser = user;
+  renderProfile(user);
+
+  if (user.role === 'seller') {
+    const auctions = await fetchAuctions(user.user_id);
+    renderAuctions(auctions);
+  } else {
+    const bids = await fetchBids(user.user_id);
+    renderBids(bids);
+  }
+}
+
+init();
+
+
+/* ── SCROLL FADE-UP ───────────────────────────────────────────── */
+const fadeEls = document.querySelectorAll('.fade-up');
+const fadeObs = new IntersectionObserver(entries => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      e.target.style.transitionDelay = (i * 80) + 'ms';
+      e.target.classList.add('visible');
+      fadeObs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.08 });
+fadeEls.forEach(el => fadeObs.observe(el));
+</script>
+</body>
+</html>
