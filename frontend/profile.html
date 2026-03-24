@@ -230,6 +230,13 @@
       font-size: 32px;
       color: var(--text);
       flex-shrink: 0;
+      overflow: hidden;
+    }
+    .profile-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
     }
     .profile-info {
       display: flex;
@@ -519,6 +526,7 @@
           <span>Member since <span id="profileSince"></span></span>
         </div>
         <a class="telegram-link" id="telegramLink" href="#" target="_blank"></a>
+        <a class="btn-ghost" id="telegramConnectBtn" href="#" target="_blank" rel="noopener noreferrer" style="display:none;margin-top:8px;width:fit-content;font-size:12px;padding:6px 16px;">Connect Telegram</a>
       </div>
     </section>
 
@@ -563,109 +571,55 @@
   <div class="dot-grid"></div>
 
 <script>
-const API = 'http://localhost';
+const STORAGE_KEY = 'smugshotz_user';
+const USER_API = 'https://personal-vsev7crp.outsystemscloud.com/User/rest/User/user/';
+const BOT_USERNAME = 'Smugshotz_bot';
 
-/* ── MOCK DATA (fallback when API is offline) ─────────────────── */
-const MOCK_USER = {
-  user_id: 1,
-  name: 'Alex Tan',
-  email: 'alex.tan@example.com',
-  telegram_handle: '@alextan',
-  role: 'seller',
-  created_at: '2024-03-15T00:00:00Z'
-};
-
-const MOCK_AUCTIONS = [
-  {
-    auction_id: 101,
-    camera_model: 'Fujifilm GFX100 II',
-    current_bid: 8500,
-    end_time: new Date(Date.now() + 3600000 * 26).toISOString(),
-    status: 'active'
-  },
-  {
-    auction_id: 102,
-    camera_model: 'Leica M11 Monochrom',
-    current_bid: 12200,
-    end_time: new Date(Date.now() + 3600000 * 4).toISOString(),
-    status: 'active'
-  },
-  {
-    auction_id: 98,
-    camera_model: 'Sony A7R V',
-    current_bid: 3800,
-    end_time: new Date(Date.now() - 86400000).toISOString(),
-    status: 'completed'
-  }
-];
-
-const MOCK_BIDS = [
-  {
-    auction_id: 205,
-    camera_model: 'Hasselblad X2D 100C',
-    your_bid: 9200,
-    current_bid: 9200,
-    end_time: new Date(Date.now() + 3600000 * 11).toISOString(),
-    is_winning: true
-  },
-  {
-    auction_id: 210,
-    camera_model: 'Canon EOS R3',
-    your_bid: 4500,
-    current_bid: 4900,
-    end_time: new Date(Date.now() + 3600000 * 2).toISOString(),
-    is_winning: false
-  },
-  {
-    auction_id: 188,
-    camera_model: 'Nikon Z9',
-    your_bid: 5100,
-    current_bid: 5100,
-    end_time: new Date(Date.now() - 3600000 * 48).toISOString(),
-    is_winning: false
-  }
-];
-
-/* ── AUTH TOKEN ───────────────────────────────────────────────── */
-function getToken() {
-  return localStorage.getItem('token') || 'demo-token';
+/* ── GET STORED USER ──────────────────────────────────────────── */
+function getStoredUser() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch { return null; }
 }
 
 /* ── API HELPERS (graceful fallback) ─────────────────────────── */
 async function fetchUser() {
-  const userId = localStorage.getItem('user_id') || 1;
+  const stored = getStoredUser();
+  if (!stored) return null;
+
   try {
-    const res = await fetch(`${API}/user/${userId}`, {
-      headers: { 'Authorization': `Bearer ${getToken()}` }
-    });
+    const res = await fetch(`${USER_API}${stored.user_id}`);
     if (!res.ok) throw new Error('non-2xx');
-    return await res.json();
+    const json = await res.json();
+    // OutSystems wraps response in a 'data' key
+    const apiUser = json?.data ?? json;
+    const fresh = { ...stored, ...apiUser };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
+    return fresh;
   } catch {
-    return MOCK_USER;
+    return stored;
   }
 }
 
 async function fetchAuctions(userId) {
   try {
-    const res = await fetch(`${API}/auction?seller_id=${userId}`, {
-      headers: { 'Authorization': `Bearer ${getToken()}` }
-    });
+    const res = await fetch('https://personal-vsev7crp.outsystemscloud.com/Auction/rest/Auction');
     if (!res.ok) throw new Error('non-2xx');
-    return await res.json();
+    const data = await res.json();
+    const list = Array.isArray(data) ? data : (data.Out1 || []);
+    return list.filter(a => Number(a.seller_id) === Number(userId));
   } catch {
-    return MOCK_AUCTIONS;
+    return [];
   }
 }
 
 async function fetchBids(userId) {
   try {
-    const res = await fetch(`${API}/auction?bidder_id=${userId}`, {
-      headers: { 'Authorization': `Bearer ${getToken()}` }
-    });
+    const res = await fetch('https://personal-vsev7crp.outsystemscloud.com/Auction/rest/Auction');
     if (!res.ok) throw new Error('non-2xx');
-    return await res.json();
+    const data = await res.json();
+    const list = Array.isArray(data) ? data : (data.Out1 || []);
+    return list.filter(a => Number(a.highest_bidder_id) === Number(userId));
   } catch {
-    return MOCK_BIDS;
+    return [];
   }
 }
 
@@ -686,8 +640,12 @@ let currentUser = null;
 
 /* ── RENDER PROFILE CARD ──────────────────────────────────────── */
 function renderProfile(user) {
-  const initial = (user.name || '?').charAt(0).toUpperCase();
-  document.getElementById('profileAvatar').textContent = initial;
+  const avatarEl = document.getElementById('profileAvatar');
+  if (user.telegram_photo_url) {
+    avatarEl.innerHTML = `<img src="${user.telegram_photo_url}" alt="Profile photo" onerror="this.parentElement.innerHTML='${(user.name||'?').charAt(0).toUpperCase()}'" />`;
+  } else {
+    avatarEl.textContent = (user.name || '?').charAt(0).toUpperCase();
+  }
   document.getElementById('profileName').textContent = user.name;
   document.getElementById('profileEmail').textContent = user.email;
   document.getElementById('profileSince').textContent = new Date(user.created_at)
@@ -696,13 +654,23 @@ function renderProfile(user) {
   const handle = user.telegram_handle
     ? (user.telegram_handle.startsWith('@') ? user.telegram_handle : '@' + user.telegram_handle)
     : null;
+  const tgLinked = !!user.telegram_chat_id;
   const tgEl = document.getElementById('telegramLink');
   if (handle) {
-    tgEl.textContent = handle;
-    tgEl.href = `https://t.me/${handle.slice(1)}`;
+    tgEl.textContent = handle + (tgLinked ? ' ✓ Linked' : ' — not linked');
+    tgEl.href = handle ? `https://t.me/${handle.slice(1)}` : '#';
+    tgEl.style.color = tgLinked ? '#2dd4bf' : '#facc15';
     tgEl.style.display = '';
   } else {
     tgEl.style.display = 'none';
+  }
+
+  const connectBtn = document.getElementById('telegramConnectBtn');
+  if (!tgLinked && user.user_id) {
+    connectBtn.href = `https://t.me/${BOT_USERNAME}?start=USER_${user.user_id}`;
+    connectBtn.style.display = '';
+  } else {
+    connectBtn.style.display = 'none';
   }
 
   document.getElementById('editName').value = user.name;
@@ -721,18 +689,22 @@ function renderAuctions(auctions) {
     return;
   }
 
-  list.innerHTML = auctions.map(a => `
+  list.innerHTML = auctions.map(a => {
+    const model = a.camera_model || `Camera #${a.camera_id || a.auction_id}`;
+    const bid = a.current_highest_bid ?? a.current_bid ?? 0;
+    const status = (a.status || 'active').toLowerCase();
+    return `
     <div class="list-item">
       <div class="list-item-info">
-        <div class="list-item-title">${a.camera_model}</div>
+        <div class="list-item-title">${model}</div>
         <div class="list-item-meta">${timeRemaining(a.end_time)}</div>
       </div>
       <div class="list-item-right">
-        <div class="list-item-bid">SGD ${Number(a.current_bid).toLocaleString()}</div>
-        <span class="status-badge ${statusBadgeClass(a.status)}">${a.status}</span>
+        <div class="list-item-bid">SGD ${Number(bid).toLocaleString()}</div>
+        <span class="status-badge ${statusBadgeClass(status)}">${status}</span>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 /* ── RENDER BIDS ──────────────────────────────────────────────── */
@@ -746,18 +718,23 @@ function renderBids(bids) {
     return;
   }
 
-  list.innerHTML = bids.map(b => `
+  list.innerHTML = bids.map(b => {
+    const model = b.camera_model || `Camera #${b.camera_id || b.auction_id}`;
+    const highest = b.current_highest_bid ?? b.current_bid ?? 0;
+    const userId = getStoredUser()?.user_id;
+    const isWinning = userId && Number(b.highest_bidder_id) === Number(userId);
+    return `
     <div class="list-item">
       <div class="list-item-info">
-        <div class="list-item-title">${b.camera_model}</div>
-        <div class="list-item-meta">Highest: SGD ${Number(b.current_bid).toLocaleString()} · ${timeRemaining(b.end_time)}</div>
+        <div class="list-item-title">${model}</div>
+        <div class="list-item-meta">Highest bid: SGD ${Number(highest).toLocaleString()} · ${timeRemaining(b.end_time)}</div>
       </div>
       <div class="list-item-right">
-        <div class="list-item-bid">Your bid: SGD ${Number(b.your_bid).toLocaleString()}</div>
-        <span class="status-badge ${b.is_winning ? 'badge-active' : 'badge-failed'}">${b.is_winning ? 'Winning' : 'Outbid'}</span>
+        <div class="list-item-bid">SGD ${Number(highest).toLocaleString()}</div>
+        <span class="status-badge ${isWinning ? 'badge-active' : 'badge-failed'}">${isWinning ? 'Winning' : 'Outbid'}</span>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 /* ── EDIT FORM SUBMIT ─────────────────────────────────────────── */
@@ -771,21 +748,20 @@ document.getElementById('editForm').addEventListener('submit', async e => {
   };
 
   try {
-    const res = await fetch(`${API}/user/${currentUser.user_id}`, {
+    const res = await fetch(USER_API, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getToken()}`
-      },
-      body: JSON.stringify(payload)
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: currentUser.user_id, ...payload })
     });
     if (!res.ok) throw new Error('non-2xx');
     currentUser = { ...currentUser, ...payload };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(currentUser));
     renderProfile(currentUser);
     statusEl.textContent = 'Changes saved.';
     statusEl.className = 'form-status success';
   } catch {
     currentUser = { ...currentUser, ...payload };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(currentUser));
     renderProfile(currentUser);
     statusEl.textContent = 'Saved locally (API offline).';
     statusEl.className = 'form-status warning';
@@ -797,16 +773,22 @@ document.getElementById('editForm').addEventListener('submit', async e => {
 /* ── INIT ─────────────────────────────────────────────────────── */
 async function init() {
   const user = await fetchUser();
+  if (!user) {
+    document.getElementById('profileName').textContent = 'No account found';
+    document.getElementById('profileEmail').textContent = '';
+    document.getElementById('profileSince').textContent = '—';
+    document.getElementById('profileAvatar').textContent = '?';
+    document.getElementById('telegramLink').style.display = 'none';
+    document.getElementById('telegramConnectBtn').style.display = 'none';
+    return;
+  }
   currentUser = user;
   renderProfile(user);
 
-  if (user.role === 'seller') {
-    const auctions = await fetchAuctions(user.user_id);
-    renderAuctions(auctions);
-  } else {
-    const bids = await fetchBids(user.user_id);
-    renderBids(bids);
-  }
+  const auctions = await fetchAuctions(user.user_id);
+  const bids = await fetchBids(user.user_id);
+  if (auctions.length) renderAuctions(auctions);
+  if (bids.length) renderBids(bids);
 }
 
 init();

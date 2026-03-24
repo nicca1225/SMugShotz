@@ -14,9 +14,20 @@ def handle_start(message):
     if text.startswith("/start USER_"):
         user_id = text.replace("/start USER_", "").strip()
 
+        photo_url = ""
+        try:
+            photos = bot.get_user_profile_photos(message.chat.id, limit=1)
+            if photos.total_count > 0:
+                file_id = photos.photos[0][-1].file_id
+                file_info = bot.get_file(file_id)
+                photo_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_info.file_path}"
+        except Exception:
+            pass
+
         payload = {
             "user_id": int(user_id),
-            "telegram_chat_id": chat_id
+            "telegram_chat_id": chat_id,
+            "telegram_photo_url": photo_url
         }
 
         try:
