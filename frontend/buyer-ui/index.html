@@ -40,7 +40,7 @@
     .filter-right { display:flex; gap:12px; align-items:center; }
     .auctions-section { padding:42px 64px 72px; }
     .auction-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:24px; }
-    .auction-card { background:var(--surface); border:1px solid var(--border); border-radius:18px; overflow:hidden; transition:border-color .25s ease, transform .25s ease, box-shadow .25s ease; }
+    .auction-card { background:var(--surface); border:1px solid var(--border); border-radius:18px; overflow:hidden; transition:border-color .25s ease, transform .25s ease, box-shadow .25s ease; cursor:pointer; text-decoration:none; color:inherit; display:block; }
     .auction-card:hover { border-color:var(--accent); transform:translateY(-4px); box-shadow:0 16px 40px rgba(230,57,70,.12); }
     .card-image { width:100%; height:180px; background:linear-gradient(135deg,#111,#181818); display:flex; align-items:center; justify-content:center; position:relative; }
     .card-placeholder { font-size:34px; opacity:.42; }
@@ -198,16 +198,12 @@
     }
     function cardHtml(auction, currentUserId) {
       const active = isActive(auction) && String(auction.status).toUpperCase() !== 'COMPLETED';
-      const isOwn = currentUserId && Number(auction.seller_id) === Number(currentUserId);
       const bidText = auction.current_highest_bid > 0 ? fmtSGD(auction.current_highest_bid) : 'No bids yet';
-      const bidButton = isOwn
-        ? `<div class="own-pill">Your listing — bidding disabled</div>`
-        : `<button class="btn-bid" data-auction-id="${auction.auction_id}" ${!active || !currentUserId ? 'disabled' : ''}>${currentUserId ? (active ? 'Place Bid' : 'Auction Ended') : 'Create account to bid'}</button>`;
       const imageContent = auction.image_url
         ? `<img src="${auction.image_url}" alt="${auction.camera_model}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" /><span class="card-placeholder" style="display:none;">📷</span>`
         : `<span class="card-placeholder">📷</span>`;
       return `
-        <article class="auction-card">
+        <a class="auction-card" href="auction-detail.html?id=${auction.auction_id}">
           <div class="card-image">
             ${imageContent}
             <div class="card-status ${active ? 'live' : 'ended'}">${active ? 'LIVE' : 'ENDED'}</div>
@@ -223,9 +219,9 @@
             <div class="bid-label">Current Highest Bid</div>
             <div class="bid-amount">${bidText}</div>
             <div class="bid-starting">Starting at ${fmtSGD(auction.start_price)}</div>
-            ${bidButton}
+            <div class="btn-bid" style="text-align:center;">View Details →</div>
           </div>
-        </article>`;
+        </a>`;
     }
     function updateUserStrip() {
       const currentUserId = getCurrentUserId();
@@ -263,8 +259,6 @@ if (emptyState) emptyState.classList.remove('visible');
         const wrap = document.createElement('div');
         wrap.innerHTML = cardHtml(auction, currentUserId);
         const card = wrap.firstElementChild;
-        const btn = card.querySelector('.btn-bid');
-        if (btn) btn.addEventListener('click', () => openBidModal(auction));
         grid.appendChild(card);
       });
     }
