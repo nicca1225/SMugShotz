@@ -30,6 +30,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
       MYSQL_ROOT_HOST: "%"
+    ports:
+      - "3306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
       # Each service owns its init.sql — numbered so MySQL runs them in order
@@ -80,6 +82,8 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+    ports:
+      - "5002:5002"
     networks: [digicam-net]
     labels:
       - "traefik.enable=true"
@@ -125,6 +129,16 @@ services:
       - "traefik.http.routers.payment.rule=PathPrefix(`/payment`)"
       - "traefik.http.services.payment.loadbalancer.server.port=5005"
 
+  price-model:
+    build: ./services/atomic/price-model
+    ports:
+      - "5000:5000"
+    networks: [digicam-net]
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.price-model.rule=PathPrefix(`/predict-price`)"
+      - "traefik.http.services.price-model.loadbalancer.server.port=5000"
+
   # ── Composite Services ──────────────────────────────────────────────────────
 
   # create-auction:
@@ -148,6 +162,23 @@ services:
   #     - "traefik.enable=true"
   #     - "traefik.http.routers.create-auction.rule=PathPrefix(`/auction/create`)"
   #     - "traefik.http.services.create-auction.loadbalancer.server.port=5010"
+
+  process-camera-details:
+    build: ./services/composite/process-camera-details
+    environment:
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION:-ap-southeast-2}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-smugshots-857481978752-ap-southeast-2-an}
+      PRICE_MODEL_URL: http://price-model:5000/predict-price
+      GOOGLE_APPLICATION_CREDENTIALS: /app/keys/esd-project-491106-c75374412546.json
+    ports:
+      - "5001:5001"
+    networks: [digicam-net]
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.process-camera-details.rule=PathPrefix(`/process-camera-details`)"
+      - "traefik.http.services.process-camera-details.loadbalancer.server.port=5001"
 
   process-bid:
     build: ./services/composite/process-bid

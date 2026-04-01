@@ -816,6 +816,10 @@
       footer { padding: 60px 24px 0; }
       .footer-bottom { flex-direction: column; gap: 8px; text-align: center; }
     }
+    .nav-user { display:flex; align-items:center; gap:8px; text-decoration:none; color:var(--text); font-size:13px; font-weight:500; transition:color 0.2s; }
+    .nav-user:hover { color:var(--accent); }
+    .nav-avatar { width:28px; height:28px; border-radius:50%; background:rgba(230,57,70,0.12); border:1px solid rgba(230,57,70,0.35); display:flex; align-items:center; justify-content:center; color:var(--accent); flex-shrink:0; }
+    .nav-username { max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   </style>
 </head>
 <body>
@@ -828,8 +832,8 @@
       <a href="seller-ui/index.html">Create Auction</a>
       <a href="profile.html">Profile</a>
     </div>
-    <div class="nav-actions">
-      <a href="seller-ui/signup.html" class="btn-ghost">Create Account</a>
+    <div class="nav-actions" id="navActions">
+      <a href="seller-ui/login.html" class="btn-ghost">Sign In</a>
       <a href="buyer-ui/index.html" class="btn-primary">View Auctions</a>
     </div>
   </nav>
@@ -1068,6 +1072,32 @@ window.addEventListener('scroll', () => {
   const scrolled = window.scrollY;
   if (heroBg) heroBg.style.transform = `translateY(${scrolled * 0.18}px) scale(1.08)`;
 }, { passive: true });
+</script>
+
+<script>
+(function() {
+  const KEY = 'smugshotz_user';
+  const user = (function() { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch(e) { return null; } })();
+  const nav = document.getElementById('navActions');
+  if (!nav) return;
+  if (user && user.user_id) {
+    nav.innerHTML =
+      '<a href="profile.html" class="nav-user" title="View profile">' +
+        '<span class="nav-avatar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>' +
+        '<span class="nav-username">' + (user.name || 'Profile') + '</span>' +
+      '</a>' +
+      '<button class="btn-ghost" id="navLogout">Log Out</button>';
+    document.getElementById('navLogout').addEventListener('click', function() {
+      localStorage.removeItem(KEY);
+      localStorage.removeItem('user_id');
+      window.location.reload();
+    });
+  } else {
+    nav.innerHTML =
+      '<a href="seller-ui/login.html" class="btn-ghost">Sign In</a>' +
+      '<a href="buyer-ui/index.html" class="btn-primary">View Auctions</a>';
+  }
+})();
 </script>
 
 </body>
