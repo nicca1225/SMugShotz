@@ -308,6 +308,10 @@
       .nav-links { display: none; }
       .signup-card { padding: 30px 24px; }
     }
+    .nav-user { display:flex; align-items:center; gap:8px; text-decoration:none; color:var(--text); font-size:13px; font-weight:500; transition:color 0.2s; }
+    .nav-user:hover { color:var(--accent); }
+    .nav-avatar { width:26px; height:26px; border-radius:50%; background:rgba(230,57,70,0.12); border:1px solid rgba(230,57,70,0.35); display:flex; align-items:center; justify-content:center; color:var(--accent); flex-shrink:0; }
+    .nav-username { max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   </style>
 </head>
 <body>
@@ -317,8 +321,8 @@
       <a href="../buyer-ui/index.html">Auctions</a>
       <a href="./index.html">Create Auction</a>
     </div>
-    <div class="nav-actions">
-      <a href="#" class="btn-ghost-sm">Sign In</a>
+    <div class="nav-actions" id="navActions">
+      <a href="./login.html" class="btn-ghost-sm">Sign In</a>
       <a href="../buyer-ui/index.html" class="btn-primary-sm">Get Started</a>
     </div>
   </nav>
@@ -470,5 +474,31 @@
       }
     });
   </script>
+
+<script>
+(function() {
+  const KEY = 'smugshotz_user';
+  const user = (function() { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch(e) { return null; } })();
+  const nav = document.getElementById('navActions');
+  if (!nav) return;
+  if (user && user.user_id) {
+    nav.innerHTML =
+      '<a href="../profile.html" class="nav-user" title="View profile">' +
+        '<span class="nav-avatar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>' +
+        '<span class="nav-username">' + (user.name || 'Profile') + '</span>' +
+      '</a>' +
+      '<button class="btn-ghost-sm" id="navLogout">Log Out</button>';
+    document.getElementById('navLogout').addEventListener('click', function() {
+      localStorage.removeItem(KEY);
+      localStorage.removeItem('user_id');
+      window.location.reload();
+    });
+  } else {
+    nav.innerHTML =
+      '<a href="./login.html" class="btn-ghost-sm">Sign In</a>' +
+      '<a href="../buyer-ui/index.html" class="btn-primary-sm">Get Started</a>';
+  }
+})();
+</script>
 </body>
 </html>

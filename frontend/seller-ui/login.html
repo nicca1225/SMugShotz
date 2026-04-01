@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Seller Sign Up — SMugShotz</title>
+  <script src="../js/zoom-persist.js"></script>
+  <title>Sign In — SMugShotz</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -54,7 +55,6 @@
       text-decoration: none;
       letter-spacing: 0.5px;
     }
-
     .nav-logo span { color: var(--accent); }
 
     .nav-links {
@@ -62,7 +62,6 @@
       gap: 40px;
       align-items: center;
     }
-
     .nav-links a {
       font-family: 'Inter', sans-serif;
       font-size: 14px;
@@ -70,11 +69,7 @@
       text-decoration: none;
       transition: color 0.25s ease;
     }
-
-    .nav-links a:hover,
-    .nav-links a.active {
-      color: var(--text);
-    }
+    .nav-links a:hover { color: var(--text); }
 
     .nav-actions {
       display: flex;
@@ -122,9 +117,9 @@
       padding: 120px 24px 48px;
     }
 
-    .signup-card {
+    .login-card {
       width: 100%;
-      max-width: 760px;
+      max-width: 520px;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 20px;
@@ -141,7 +136,7 @@
       margin-bottom: 16px;
     }
 
-    .signup-title {
+    .login-title {
       font-family: 'Barlow Condensed', sans-serif;
       font-weight: 900;
       font-size: clamp(38px, 5vw, 56px);
@@ -150,13 +145,12 @@
       margin-bottom: 14px;
     }
 
-    .signup-sub {
+    .login-sub {
       font-size: 15px;
       color: var(--muted);
       font-weight: 300;
       line-height: 1.6;
       margin-bottom: 36px;
-      max-width: 520px;
     }
 
     .field-group {
@@ -182,6 +176,7 @@
       padding: 14px 16px;
       font-size: 14px;
       width: 100%;
+      font-family: 'Inter', sans-serif;
     }
 
     .field-input:focus {
@@ -201,6 +196,13 @@
       border: none;
       cursor: pointer;
       margin-top: 10px;
+      font-family: 'Inter', sans-serif;
+      transition: filter 0.2s, transform 0.2s;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
     }
 
     .btn-submit:disabled {
@@ -215,14 +217,12 @@
       padding: 28px;
       border: 1px solid var(--border);
     }
-
     .status-card.visible { display: block; }
 
     .success-card {
       background: rgba(48, 209, 88, 0.05);
       border-left: 3px solid var(--success);
     }
-
     .error-card {
       background: rgba(255, 68, 68, 0.05);
       border-left: 3px solid var(--danger);
@@ -235,7 +235,6 @@
       text-transform: uppercase;
       margin-bottom: 10px;
     }
-
     .success-card .status-title { color: var(--success); }
     .error-card .status-title { color: var(--danger); }
 
@@ -243,70 +242,30 @@
       font-size: 14px;
       color: var(--muted);
       line-height: 1.65;
-      margin-bottom: 10px;
     }
 
-    .user-id-box {
-      margin: 16px 0 22px;
-      background: #111;
-      border: 1px solid #2a2a2a;
-      border-radius: 12px;
-      padding: 14px 16px;
-    }
-
-    .user-id-label {
-      display: block;
-      font-size: 11px;
+    .divider {
+      text-align: center;
+      margin: 28px 0 0;
+      font-size: 14px;
       color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      margin-bottom: 6px;
     }
-
-    .user-id-value {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 28px;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    .action-row {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .btn-telegram {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--accent);
-      color: var(--text);
-      padding: 14px 24px;
-      border-radius: 50px;
-      font-size: 15px;
-      font-weight: 600;
+    .divider a {
+      color: var(--accent);
       text-decoration: none;
-    }
-
-    .btn-secondary-link {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: transparent;
-      color: var(--text);
-      padding: 14px 24px;
-      border-radius: 50px;
-      font-size: 15px;
       font-weight: 500;
-      text-decoration: none;
-      border: 1px solid var(--border);
     }
+    .divider a:hover { text-decoration: underline; }
+
+    .nav-user { display:flex; align-items:center; gap:8px; text-decoration:none; color:var(--text); font-size:13px; font-weight:500; transition:color 0.2s; }
+    .nav-user:hover { color:var(--accent); }
+    .nav-avatar { width:26px; height:26px; border-radius:50%; background:rgba(230,57,70,0.12); border:1px solid rgba(230,57,70,0.35); display:flex; align-items:center; justify-content:center; color:var(--accent); flex-shrink:0; }
+    .nav-username { max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
     @media (max-width: 768px) {
       nav { padding: 0 24px; }
       .nav-links { display: none; }
-      .signup-card { padding: 30px 24px; }
+      .login-card { padding: 30px 24px; }
     }
   </style>
 </head>
@@ -315,150 +274,144 @@
     <a href="../index.html" class="nav-logo">SMug<span>Shotz</span></a>
     <div class="nav-links">
       <a href="../buyer-ui/index.html">Auctions</a>
-      <a href="./index.html" class="active">Sell</a>
+      <a href="./index.html">Create Auction</a>
     </div>
-    <div class="nav-actions">
-      <a href="#" class="btn-ghost-sm">Sign In</a>
+    <div class="nav-actions" id="navActions">
+      <a href="./login.html" class="btn-ghost-sm">Sign In</a>
       <a href="../buyer-ui/index.html" class="btn-primary-sm">Get Started</a>
     </div>
   </nav>
 
   <main class="page-shell">
-    <section class="signup-card">
-      <span class="overline">Seller</span>
-      <h1 class="signup-title">Create Seller Account</h1>
-      <p class="signup-sub">
-        Create your seller account first, then connect Telegram to link your notifications.
-      </p>
+    <section class="login-card">
+      <span class="overline">Welcome Back</span>
+      <h1 class="login-title">Sign In</h1>
+      <p class="login-sub">Enter the email address associated with your account.</p>
 
-      <form id="signupForm" novalidate>
+      <form id="loginForm" novalidate>
         <div class="field-group">
-          <label class="field-label" for="name">Name</label>
-          <input class="field-input" type="text" id="name" placeholder="e.g. John Tan" required />
+          <label class="field-label" for="email">Email Address</label>
+          <input class="field-input" type="email" id="email" placeholder="you@example.com" autocomplete="email" required />
         </div>
-
-        <div class="field-group">
-          <label class="field-label" for="email">Email</label>
-          <input class="field-input" type="email" id="email" placeholder="e.g. john@example.com" required />
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="telegram">Telegram Username</label>
-          <input class="field-input" type="text" id="telegram" placeholder="@optional" />
-        </div>
-
-        <button type="submit" class="btn-submit" id="submitBtn">Create Account</button>
+        <button type="submit" class="btn-submit" id="submitBtn">Sign In</button>
       </form>
 
       <div class="status-card success-card" id="successCard">
-        <div class="status-title">Account Created</div>
-        <p class="status-text">
-          Your seller account was created successfully. Click the button below to connect Telegram.
-        </p>
-
-        <div class="user-id-box">
-          <span class="user-id-label">Your User ID</span>
-          <div class="user-id-value" id="userIdValue">—</div>
-        </div>
-
-        <div class="action-row">
-          <a id="telegramLink" class="btn-telegram" href="#" target="_blank" rel="noopener noreferrer">
-            Connect Telegram
-          </a>
-          <a href="./index.html" class="btn-secondary-link">Go to Seller Page</a>
-        </div>
+        <div class="status-title">Welcome Back!</div>
+        <p class="status-text" id="successText">Signed in successfully. Redirecting…</p>
       </div>
 
       <div class="status-card error-card" id="errorCard">
-        <div class="status-title">Signup Failed</div>
-        <p class="status-text" id="errorText">Something went wrong while creating your account.</p>
+        <div class="status-title">Sign In Failed</div>
+        <p class="status-text" id="errorText">No account found with that email address.</p>
       </div>
+
+      <p class="divider">Don't have an account? <a href="./signup.html">Create one</a></p>
     </section>
   </main>
 
   <script>
     const API_URL = 'https://personal-vsev7crp.outsystemscloud.com/User/rest/User/user/';
-    const BOT_USERNAME = 'Smugshotz_bot';
+    const STORAGE_KEY = 'smugshotz_user';
 
-    const signupForm = document.getElementById('signupForm');
-    const submitBtn = document.getElementById('submitBtn');
+    // If already logged in, redirect straight to profile
+    (function() {
+      try {
+        const u = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+        if (u && u.user_id) window.location.href = '../profile.html';
+      } catch(e) {}
+    })();
+
+    const loginForm   = document.getElementById('loginForm');
+    const submitBtn   = document.getElementById('submitBtn');
     const successCard = document.getElementById('successCard');
-    const errorCard = document.getElementById('errorCard');
-    const errorText = document.getElementById('errorText');
-    const userIdValue = document.getElementById('userIdValue');
-    const telegramLink = document.getElementById('telegramLink');
+    const successText = document.getElementById('successText');
+    const errorCard   = document.getElementById('errorCard');
+    const errorText   = document.getElementById('errorText');
 
-    signupForm.addEventListener('submit', async function (e) {
+    loginForm.addEventListener('submit', async function(e) {
       e.preventDefault();
-
       successCard.classList.remove('visible');
       errorCard.classList.remove('visible');
 
-      const name = document.getElementById('name').value.trim();
       const email = document.getElementById('email').value.trim();
-      const telegramHandle = document.getElementById('telegram').value.trim();
-
-      if (!name || !email) {
-        errorText.textContent = 'Please fill in your name and email.';
+      if (!email) {
+        errorText.textContent = 'Please enter your email address.';
         errorCard.classList.add('visible');
         return;
       }
 
-      const payload = {
-        name: name,
-        email: email,
-        telegram_handle: telegramHandle,
-        telegram_chat_id: '',
-        role: 'seller'
-      };
-
       submitBtn.disabled = true;
+      submitBtn.textContent = 'Signing in…';
 
       try {
-        const response = await fetch(API_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(payload)
-        });
-
+        // Look up user by email
+        const res = await fetch(API_URL + '?email=' + encodeURIComponent(email));
         let data = {};
-        try {
-          data = await response.json();
-        } catch (_) {}
+        try { data = await res.json(); } catch(_) {}
 
-        console.log('Signup API response:', data);
+        // Handle both array response and single-object response
+        const payload = data?.data ?? data;
+        const user = Array.isArray(payload) ? payload[0] : payload;
 
-        if (response.ok) {
-          const userId = data?.data?.user_id;
-
-          if (!userId) {
-            throw new Error('User was created, but no user_id was returned.');
-          }
-
-          userIdValue.textContent = userId;
-
-          const deepLink = `https://t.me/${BOT_USERNAME}?start=USER_${userId}`;
-          telegramLink.href = deepLink;
-
-          signupForm.style.display = 'none';
-          successCard.classList.add('visible');
-        } else {
-          errorText.textContent =
-            data?.error ||
-            data?.message ||
-            `Server returned status ${response.status}.`;
+        if (!res.ok || !user || !user.user_id) {
+          errorText.textContent = 'No account found with that email. Please check your email or create a new account.';
           errorCard.classList.add('visible');
+          return;
         }
-      } catch (err) {
-        errorText.textContent =
-          err.message || 'Network error. Please check your connection and try again.';
+
+        const stored = {
+          user_id: Number(user.user_id),
+          name: user.name || user.Name || '',
+          email: user.email || user.Email || email,
+          telegram_handle: user.telegram_handle || user.TelegramHandle || ''
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
+        localStorage.setItem('user_id', String(stored.user_id));
+
+        successText.textContent = 'Signed in as ' + stored.name + '. Redirecting…';
+        successCard.classList.add('visible');
+        loginForm.style.display = 'none';
+
+        setTimeout(function() {
+          const redirect = new URLSearchParams(window.location.search).get('redirect');
+          window.location.href = redirect || '../profile.html';
+        }, 1200);
+
+      } catch(err) {
+        errorText.textContent = 'Network error. Please check your connection and try again.';
         errorCard.classList.add('visible');
       } finally {
         submitBtn.disabled = false;
+        submitBtn.textContent = 'Sign In';
       }
     });
+  </script>
+
+  <script>
+  (function() {
+    const KEY = 'smugshotz_user';
+    const user = (function() { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch(e) { return null; } })();
+    const nav = document.getElementById('navActions');
+    if (!nav) return;
+    if (user && user.user_id) {
+      nav.innerHTML =
+        '<a href="../profile.html" class="nav-user" title="View profile">' +
+          '<span class="nav-avatar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>' +
+          '<span class="nav-username">' + (user.name || 'Profile') + '</span>' +
+        '</a>' +
+        '<button class="btn-ghost-sm" id="navLogout">Log Out</button>';
+      document.getElementById('navLogout').addEventListener('click', function() {
+        localStorage.removeItem(KEY);
+        localStorage.removeItem('user_id');
+        window.location.reload();
+      });
+    } else {
+      nav.innerHTML =
+        '<a href="./login.html" class="btn-ghost-sm">Sign In</a>' +
+        '<a href="../buyer-ui/index.html" class="btn-primary-sm">Get Started</a>';
+    }
+  })();
   </script>
 </body>
 </html>

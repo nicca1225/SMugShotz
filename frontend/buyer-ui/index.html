@@ -80,6 +80,10 @@
       .nav-links { display:none; }
       .user-strip, .filter-bar, .auctions-section { padding-left:20px; padding-right:20px; }
     }
+    .nav-user { display:flex; align-items:center; gap:8px; text-decoration:none; color:var(--text); font-size:13px; font-weight:500; transition:color 0.2s; }
+    .nav-user:hover { color:var(--accent); }
+    .nav-avatar { width:26px; height:26px; border-radius:50%; background:rgba(230,57,70,0.12); border:1px solid rgba(230,57,70,0.35); display:flex; align-items:center; justify-content:center; color:var(--accent); flex-shrink:0; }
+    .nav-username { max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   </style>
 </head>
 <body>
@@ -90,8 +94,8 @@
       <a href="../seller-ui/index.html">Create Auction</a>
       <a href="../profile.html">Profile</a>
     </div>
-    <div class="nav-actions">
-      <a href="../seller-ui/signup.html" class="btn-ghost-sm">Create Account</a>
+    <div class="nav-actions" id="navActions">
+      <a href="../seller-ui/login.html" class="btn-ghost-sm">Sign In</a>
       <a href="../seller-ui/index.html" class="btn-primary-sm">Create Auction</a>
     </div>
   </nav>
@@ -154,6 +158,7 @@
     const STORAGE_KEY = 'smugshotz_user';
     const AUCTIONS_API_URL = 'https://personal-vsev7crp.outsystemscloud.com/Auction/rest/Auction';
     const BID_API_URL = localStorage.getItem('smugshotz_bid_api') || 'http://localhost:5011/bid';
+    const CAMERA_SERVICE_URL = 'http://localhost:5002/camera';
 
     let allAuctions = [];
     let currentFilter = 'all';
@@ -198,10 +203,13 @@
       const bidButton = isOwn
         ? `<div class="own-pill">Your listing — bidding disabled</div>`
         : `<button class="btn-bid" data-auction-id="${auction.auction_id}" ${!active || !currentUserId ? 'disabled' : ''}>${currentUserId ? (active ? 'Place Bid' : 'Auction Ended') : 'Create account to bid'}</button>`;
+      const imageContent = auction.image_url
+        ? `<img src="${auction.image_url}" alt="${auction.camera_model}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" /><span class="card-placeholder" style="display:none;">📷</span>`
+        : `<span class="card-placeholder">📷</span>`;
       return `
         <article class="auction-card">
           <div class="card-image">
-            <span class="card-placeholder">📷</span>
+            ${imageContent}
             <div class="card-status ${active ? 'live' : 'ended'}">${active ? 'LIVE' : 'ENDED'}</div>
           </div>
           <div class="card-body">
@@ -260,16 +268,33 @@ if (emptyState) emptyState.classList.remove('visible');
         grid.appendChild(card);
       });
     }
+    async function fetchCameraImage(cameraId) {
+      try {
+        const res = await fetch(`${CAMERA_SERVICE_URL}/${cameraId}`);
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data.s3_image_url || null;
+      } catch (_) {
+        return null;
+      }
+    }
     async function fetchAuctions() {
       try {
         const res = await fetch(AUCTIONS_API_URL);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-const data = await res.json();
+        const data = await res.json();
 
-// OutSystems returns { Out1: [...] }
-const list = Array.isArray(data) ? data : (data.Out1 || []);
+        // OutSystems returns { Out1: [...] }
+        const list = Array.isArray(data) ? data : (data.Out1 || []);
+        allAuctions = list.map(normaliseAuction).filter(a => a.auction_id && a.seller_id);
 
-allAuctions = list.map(normaliseAuction).filter(a => a.auction_id && a.seller_id);
+        // Fetch camera images in parallel for all auctions with a camera_id
+        const cameraIds = [...new Set(allAuctions.map(a => a.camera_id).filter(Boolean))];
+        const imageMap = {};
+        await Promise.all(cameraIds.map(async id => {
+          imageMap[id] = await fetchCameraImage(id);
+        }));
+        allAuctions.forEach(a => { if (a.camera_id) a.image_url = imageMap[a.camera_id] || null; });
       } catch (err) {
         console.error('Failed to fetch auctions:', err);
         allAuctions = [];
@@ -354,6 +379,31 @@ allAuctions = list.map(normaliseAuction).filter(a => a.auction_id && a.seller_id
   <div class="dot-grid"></div>
 
 <script>
+</script>
+<script>
+(function() {
+  const KEY = 'smugshotz_user';
+  const user = (function() { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch(e) { return null; } })();
+  const nav = document.getElementById('navActions');
+  if (!nav) return;
+  if (user && user.user_id) {
+    nav.innerHTML =
+      '<a href="../profile.html" class="nav-user" title="View profile">' +
+        '<span class="nav-avatar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>' +
+        '<span class="nav-username">' + (user.name || 'Profile') + '</span>' +
+      '</a>' +
+      '<button class="btn-ghost-sm" id="navLogout">Log Out</button>';
+    document.getElementById('navLogout').addEventListener('click', function() {
+      localStorage.removeItem(KEY);
+      localStorage.removeItem('user_id');
+      window.location.reload();
+    });
+  } else {
+    nav.innerHTML =
+      '<a href="../seller-ui/login.html" class="btn-ghost-sm">Sign In</a>' +
+      '<a href="../seller-ui/index.html" class="btn-primary-sm">Create Auction</a>';
+  }
+})();
 </script>
 </body>
 </html>

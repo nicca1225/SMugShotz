@@ -79,12 +79,59 @@
     .user-chip span { display: block; font-size: 11px; color: var(--muted); letter-spacing: 1.4px; text-transform: uppercase; margin-bottom: 6px; }
     .user-chip strong { font-family: 'Barlow Condensed', sans-serif; font-size: 32px; }
     .hidden { display: none !important; }
+
+    /* ── STEPPER ─────────────────────────────────────────────────── */
+    .stepper { display: flex; align-items: center; gap: 0; margin-bottom: 28px; }
+    .step { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 500; color: var(--muted); }
+    .step-num { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--muted); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+    .step.active { color: var(--text); }
+    .step.active .step-num { border-color: var(--accent); background: var(--accent); color: #fff; }
+    .step.done .step-num { border-color: var(--success); background: var(--success); color: #fff; }
+    .step.done { color: var(--muted); }
+    .step-line { flex: 1; height: 1px; background: var(--border); margin: 0 12px; min-width: 24px; }
+
+    /* ── IMAGE UPLOAD ────────────────────────────────────────────── */
+    .upload-zone {
+      border: 2px dashed #2e2e2e; border-radius: 14px; padding: 36px 24px;
+      text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+      position: relative; overflow: hidden;
+    }
+    .upload-zone:hover, .upload-zone.drag-over { border-color: var(--accent); background: rgba(230,57,70,0.04); }
+    .upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .upload-icon { color: var(--muted); margin-bottom: 12px; }
+    .upload-label { font-size: 14px; font-weight: 500; color: var(--text); display: block; margin-bottom: 4px; }
+    .upload-hint { font-size: 12px; color: var(--muted); }
+    .upload-preview { max-width: 100%; max-height: 180px; border-radius: 10px; margin-top: 14px; display: none; }
+
+    /* ── ANALYSIS RESULT PANEL ───────────────────────────────────── */
+    .result-panel { background: var(--surface-2); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 20px; display: none; }
+    .result-panel.visible { display: block; }
+    .result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 14px; }
+    .result-item { background: #090909; border: 1px solid #232323; border-radius: 12px; padding: 14px; }
+    .result-item-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+    .result-item-value { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 700; }
+    .result-item-value.accent { color: var(--accent); }
+    .result-item-value.success { color: var(--success); }
+    .result-img { width: 100%; max-height: 160px; object-fit: cover; border-radius: 10px; margin-top: 14px; }
+
+    /* ── PROGRESS INDICATOR ──────────────────────────────────────── */
+    .progress-card { display: none; text-align: center; padding: 40px 24px; }
+    .progress-card.visible { display: block; }
+    .progress-spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .progress-label { font-size: 14px; color: var(--muted); }
+
     @media (max-width: 960px) {
       nav { padding: 0 24px; }
       .nav-links { display: none; }
       .main-content { padding: 36px 20px 64px; }
       .content-grid, .fields-row { grid-template-columns: 1fr; }
+      .result-grid { grid-template-columns: 1fr 1fr; }
     }
+    .nav-user { display:flex; align-items:center; gap:8px; text-decoration:none; color:var(--text); font-size:13px; font-weight:500; transition:color 0.2s; }
+    .nav-user:hover { color:var(--accent); }
+    .nav-avatar { width:26px; height:26px; border-radius:50%; background:rgba(230,57,70,0.12); border:1px solid rgba(230,57,70,0.35); display:flex; align-items:center; justify-content:center; color:var(--accent); flex-shrink:0; }
+    .nav-username { max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   </style>
 </head>
 <body>
@@ -95,8 +142,8 @@
       <a href="./index.html" class="active">Create Auction</a>
       <a href="../profile.html">Profile</a>
     </div>
-    <div class="nav-actions">
-      <a href="./signup.html" class="btn-ghost-sm">Create Account</a>
+    <div class="nav-actions" id="navActions">
+      <a href="./login.html" class="btn-ghost-sm">Sign In</a>
       <a href="../buyer-ui/index.html" class="btn-primary-sm">View Auctions</a>
     </div>
   </nav>
@@ -104,170 +151,411 @@
   <div class="page-hero">
     <span class="overline">Create</span>
     <h1 class="page-hero-heading">List a New Auction</h1>
-    <p class="page-hero-sub">Any signed-in user can create auctions and bid on other listings. Your user ID is prefilled below, and your auction will immediately show up in the cards view once created.</p>
+    <p class="page-hero-sub">Upload your camera photo and we'll verify it with AI, score its condition, and suggest a starting price — then list it as an auction in seconds.</p>
   </div>
 
   <div class="main-content">
     <div class="content-grid">
       <div>
         <div class="form-card" id="formCard">
-          <span class="form-section-label">Auction Details</span>
-          <div class="user-chip" style="margin-bottom:24px;">
-            <span>Logged In User</span>
-            <strong id="loggedInUserValue">—</strong>
-          </div>
-          <form id="listingForm" novalidate>
-            <div class="fields-row">
-              <div class="field-group">
-                <label class="field-label" for="sellerId">Seller ID</label>
-                <input class="field-input" type="number" id="sellerId" name="seller_id" min="1" required readonly />
-                <div class="field-help">This is auto-filled from the account you created earlier.</div>
-              </div>
-              <div class="field-group">
-                <label class="field-label" for="cameraId">Camera ID</label>
-                <input class="field-input" type="number" id="cameraId" name="camera_id" placeholder="e.g. 101" min="1" required />
-                <div class="field-help">Use a placeholder camera ID for now while the camera details flow is still being finalised.</div>
-              </div>
-            </div>
-            <div class="fields-row">
-              <div class="field-group">
-                <label class="field-label" for="startPrice">Start Price (SGD)</label>
-                <input class="field-input" type="number" id="startPrice" name="start_price" placeholder="e.g. 500" min="1" step="0.01" required />
-              </div>
-              <div class="field-group">
-                <label class="field-label" for="endDate">End Date & Time</label>
-                <input class="field-input" type="datetime-local" id="endDate" name="end_time" required />
-              </div>
-            </div>
-            <button type="submit" class="btn-submit" id="submitBtn">Create Auction</button>
-          </form>
-          <div class="state-card success" id="successCard">
-            <div class="state-title">Auction Created</div>
-            <p class="state-text">Your auction was created successfully. You can now view it in the auction cards page and start accepting bids from other users.</p>
-            <div class="state-id"><span>Auction ID</span><strong id="resultAuctionId">—</strong></div>
-            <div class="state-actions">
-              <a href="../buyer-ui/index.html" class="btn-primary-sm">View Auctions</a>
-              <a href="./index.html" class="btn-link">Create Another</a>
-            </div>
-          </div>
-          <div class="state-card error" id="errorCard">
-            <div class="state-title">Submission Failed</div>
-            <p class="state-text" id="errorMsg">Please try again.</p>
-          </div>
+
+          <!-- Not logged in -->
           <div class="state-card error hidden" id="authCard">
-            <div class="state-title">Create an Account First</div>
-            <p class="state-text">We couldn't find a logged-in user in this browser yet. Create your account first so we can attach the correct seller ID to this auction.</p>
+            <div class="state-title">Sign In First</div>
+            <p class="state-text">You need to be signed in to list a camera for auction.</p>
             <div class="state-actions" style="margin-top:18px;">
-              <a href="./signup.html" class="btn-primary-sm">Create Account</a>
-              <a href="../buyer-ui/index.html" class="btn-link">Browse Auctions</a>
+              <a href="./login.html" class="btn-primary-sm">Sign In</a>
+              <a href="./signup.html" class="btn-link">Create Account</a>
             </div>
           </div>
+
+          <!-- Stepper -->
+          <div id="stepperWrap">
+            <div class="stepper">
+              <div class="step active" id="step1Indicator">
+                <div class="step-num">1</div>
+                <span>Camera Details</span>
+              </div>
+              <div class="step-line"></div>
+              <div class="step" id="step2Indicator">
+                <div class="step-num">2</div>
+                <span>Auction Details</span>
+              </div>
+            </div>
+
+            <!-- STEP 1: Camera Details -->
+            <div id="step1">
+              <span class="form-section-label">Camera Details</span>
+              <div class="fields-row">
+                <div class="field-group">
+                  <label class="field-label" for="brand">Brand</label>
+                  <input class="field-input" type="text" id="brand" placeholder="e.g. Sony" />
+                </div>
+                <div class="field-group">
+                  <label class="field-label" for="model">Model</label>
+                  <input class="field-input" type="text" id="model" placeholder="e.g. A6400" />
+                </div>
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="shutterCount">Shutter Count</label>
+                <input class="field-input" type="number" id="shutterCount" placeholder="e.g. 10000" min="0" />
+              </div>
+              <div class="field-group">
+                <label class="field-label">Camera Photo</label>
+                <div class="upload-zone" id="uploadZone">
+                  <input type="file" id="imageInput" accept=".jpg,.jpeg,.png,.webp" />
+                  <div class="upload-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                  </div>
+                  <span class="upload-label">Click or drag to upload</span>
+                  <span class="upload-hint">JPG, PNG or WEBP</span>
+                  <img id="uploadPreview" class="upload-preview" alt="preview" />
+                </div>
+              </div>
+              <button class="btn-submit" id="analyseBtn">Analyse Camera</button>
+            </div>
+
+            <!-- Progress while calling process-camera-details -->
+            <div class="progress-card" id="progressCard">
+              <div class="progress-spinner"></div>
+              <div class="progress-label" id="progressLabel">Uploading image and analysing…</div>
+            </div>
+
+            <!-- STEP 2: Analysis result + Auction Details -->
+            <div id="step2" class="hidden">
+              <span class="form-section-label">AI Analysis Results</span>
+              <div class="result-panel visible" id="resultPanel">
+                <img id="resultImg" class="result-img hidden" alt="Uploaded camera" />
+                <div class="result-grid">
+                  <div class="result-item">
+                    <div class="result-item-label">Camera</div>
+                    <div class="result-item-value" id="resultCamera" style="font-size:18px;line-height:1.3;">—</div>
+                  </div>
+                  <div class="result-item">
+                    <div class="result-item-label">Condition Score</div>
+                    <div class="result-item-value accent" id="resultScore">—</div>
+                  </div>
+                  <div class="result-item">
+                    <div class="result-item-label">Suggested Price</div>
+                    <div class="result-item-value success" id="resultPrice">—</div>
+                  </div>
+                </div>
+              </div>
+
+              <span class="form-section-label" style="margin-top:8px;">Auction Details</span>
+              <div class="user-chip" style="margin-bottom:18px;">
+                <span>Logged In User</span>
+                <strong id="loggedInUserValue">—</strong>
+              </div>
+              <form id="listingForm" novalidate>
+                <div class="fields-row">
+                  <div class="field-group">
+                    <label class="field-label" for="sellerId">Seller ID</label>
+                    <input class="field-input" type="number" id="sellerId" readonly />
+                    <div class="field-help">Auto-filled from your account.</div>
+                  </div>
+                  <div class="field-group">
+                    <label class="field-label" for="startPrice">Start Price (SGD)</label>
+                    <input class="field-input" type="number" id="startPrice" placeholder="e.g. 500" min="1" step="0.01" required />
+                    <div class="field-help">Pre-filled from AI price model. You can adjust.</div>
+                  </div>
+                </div>
+                <div class="field-group">
+                  <label class="field-label" for="endDate">End Date & Time</label>
+                  <input class="field-input" type="datetime-local" id="endDate" required />
+                </div>
+                <div style="display:flex;gap:12px;margin-top:8px;">
+                  <button type="button" class="btn-link" id="backBtn" style="flex:0 0 auto;">← Back</button>
+                  <button type="submit" class="btn-submit" id="submitBtn" style="flex:1;">Create Auction</button>
+                </div>
+              </form>
+
+              <div class="state-card success" id="successCard">
+                <div class="state-title">Auction Created</div>
+                <p class="state-text">Your camera has been verified, saved, and listed. It will appear in the auctions page immediately.</p>
+                <div class="state-id"><span>Auction ID</span><strong id="resultAuctionId">—</strong></div>
+                <div class="state-actions">
+                  <a href="../buyer-ui/index.html" class="btn-primary-sm">View Auctions</a>
+                  <a href="./index.html" class="btn-link">Create Another</a>
+                </div>
+              </div>
+              <div class="state-card error" id="errorCard">
+                <div class="state-title">Submission Failed</div>
+                <p class="state-text" id="errorMsg">Please try again.</p>
+              </div>
+            </div>
+
+          </div><!-- /stepperWrap -->
         </div>
       </div>
+
       <div class="sidebar">
         <div class="sidebar-card">
-          <div class="sidebar-card-title">How This Page Works</div>
+          <div class="sidebar-card-title">How This Works</div>
           <ul class="sidebar-bullets">
-            <li>Every user can now both create auctions and place bids.</li>
-            <li>The seller ID is automatically taken from the account you created on this browser.</li>
-            <li>Cards are imageless for now, but the listing flow is ready for the rest of the camera details later.</li>
+            <li>Upload a photo of your camera — our AI verifies it's a real camera.</li>
+            <li>Google Vision scores the condition (0–10) based on labels and text in the image.</li>
+            <li>The price model suggests a starting price using live market data.</li>
+            <li>Your camera is saved and the auction is created in one step.</li>
           </ul>
         </div>
-        <div class="sidebar-card">
-          <div class="sidebar-card-title">Current Inputs</div>
-          <ul class="sidebar-bullets">
-            <li>Camera ID is still manual for now.</li>
-            <li>Start price and end time are sent to the current Create Auction API.</li>
-            <li>Once created, the auction can be viewed and bid on from the auctions page.</li>
-          </ul>
+        <div class="sidebar-card" id="sidebarResults" style="display:none;">
+          <div class="sidebar-card-title">Analysis Summary</div>
+          <ul class="sidebar-bullets" id="sidebarBullets"></ul>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    const STORAGE_KEY = 'smugshotz_user';
-    const API_URL = 'https://personal-vsev7crp.outsystemscloud.com/CreateAuction/rest/CreateAuctionAPI/auction/create';
+    const STORAGE_KEY        = 'smugshotz_user';
+    const PROCESS_CAMERA_URL = 'http://localhost:5001/process-camera-details';
+    const CAMERA_SERVICE_URL = 'http://localhost:5002/camera';
+    const AUCTION_API_URL    = 'https://personal-vsev7crp.outsystemscloud.com/CreateAuction/rest/CreateAuctionAPI/auction/create';
 
-    const listingForm = document.getElementById('listingForm');
-    const submitBtn = document.getElementById('submitBtn');
-    const successCard = document.getElementById('successCard');
-    const errorCard = document.getElementById('errorCard');
-    const authCard = document.getElementById('authCard');
-    const errorMsg = document.getElementById('errorMsg');
-    const sellerIdInput = document.getElementById('sellerId');
-    const loggedInUserValue = document.getElementById('loggedInUserValue');
+    // ── State ────────────────────────────────────────────────────────
+    let analysisResult = null; // holds response from process-camera-details
 
-    (function setDefaultEndTime() {
-      const endDateInput = document.getElementById('endDate');
-      const threeDays = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
-      const pad = n => String(n).padStart(2, '0');
-      endDateInput.value = `${threeDays.getFullYear()}-${pad(threeDays.getMonth() + 1)}-${pad(threeDays.getDate())}T${pad(threeDays.getHours())}:${pad(threeDays.getMinutes())}`;
-    })();
+    // ── DOM refs ─────────────────────────────────────────────────────
+    const authCard        = document.getElementById('authCard');
+    const stepperWrap     = document.getElementById('stepperWrap');
+    const step1El         = document.getElementById('step1');
+    const step2El         = document.getElementById('step2');
+    const progressCard    = document.getElementById('progressCard');
+    const progressLabel   = document.getElementById('progressLabel');
+    const step1Indicator  = document.getElementById('step1Indicator');
+    const step2Indicator  = document.getElementById('step2Indicator');
+    const analyseBtn      = document.getElementById('analyseBtn');
+    const backBtn         = document.getElementById('backBtn');
+    const listingForm     = document.getElementById('listingForm');
+    const submitBtn       = document.getElementById('submitBtn');
+    const successCard     = document.getElementById('successCard');
+    const errorCard       = document.getElementById('errorCard');
+    const errorMsg        = document.getElementById('errorMsg');
+    const sellerIdInput   = document.getElementById('sellerId');
+    const uploadZone      = document.getElementById('uploadZone');
+    const imageInput      = document.getElementById('imageInput');
+    const uploadPreview   = document.getElementById('uploadPreview');
 
+    // ── Auth check ───────────────────────────────────────────────────
     function getStoredUser() {
-      try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-      } catch (_) {
-        return null;
-      }
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch(_) { return null; }
     }
 
     const storedUser = getStoredUser();
-    if (storedUser && storedUser.user_id) {
-      sellerIdInput.value = storedUser.user_id;
-      loggedInUserValue.textContent = storedUser.user_id;
-    } else {
-      loggedInUserValue.textContent = '—';
-      listingForm.classList.add('hidden');
+    if (!storedUser || !storedUser.user_id) {
+      stepperWrap.classList.add('hidden');
       authCard.classList.remove('hidden');
       authCard.classList.add('visible');
+    } else {
+      document.getElementById('loggedInUserValue').textContent = storedUser.user_id;
+      sellerIdInput.value = storedUser.user_id;
+      // Default end time: 3 days from now
+      (function() {
+        const pad = n => String(n).padStart(2, '0');
+        const d = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+        document.getElementById('endDate').value =
+          `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      })();
     }
 
-    listingForm.addEventListener('submit', async function (e) {
+    // ── Image upload preview ─────────────────────────────────────────
+    imageInput.addEventListener('change', function() {
+      const file = this.files[0];
+      if (!file) return;
+      const url = URL.createObjectURL(file);
+      uploadPreview.src = url;
+      uploadPreview.style.display = 'block';
+    });
+    uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+    uploadZone.addEventListener('drop', e => {
+      e.preventDefault();
+      uploadZone.classList.remove('drag-over');
+      if (e.dataTransfer.files[0]) {
+        imageInput.files = e.dataTransfer.files;
+        imageInput.dispatchEvent(new Event('change'));
+      }
+    });
+
+    // ── Step 1 → Analysis ────────────────────────────────────────────
+    analyseBtn.addEventListener('click', async function() {
+      const brand        = document.getElementById('brand').value.trim();
+      const model        = document.getElementById('model').value.trim();
+      const shutterCount = document.getElementById('shutterCount').value.trim();
+      const file         = imageInput.files[0];
+
+      if (!brand || !model || !shutterCount || !file) {
+        alert('Please fill in brand, model, shutter count and upload an image.');
+        return;
+      }
+
+      // Show progress
+      step1El.classList.add('hidden');
+      progressCard.classList.add('visible');
+      progressLabel.textContent = 'Uploading image and analysing with AI…';
+
+      const formData = new FormData();
+      formData.append('brand', brand);
+      formData.append('model', model);
+      formData.append('shutter_count', shutterCount);
+      formData.append('seller_id', storedUser.user_id);
+      formData.append('image', file);
+
+      try {
+        const res = await fetch(PROCESS_CAMERA_URL, { method: 'POST', body: formData });
+        const data = await res.json();
+
+        if (!res.ok || data.code !== 200) {
+          throw new Error(data.message || 'Analysis failed.');
+        }
+
+        analysisResult = data.data;
+
+        // Populate results panel
+        const score    = analysisResult.condition_score ?? '—';
+        const price    = analysisResult.pricing?.suggested_price;
+        const imageUrl = analysisResult.images?.[0]?.storage?.image_url;
+
+        document.getElementById('resultCamera').textContent = brand + ' ' + model;
+        document.getElementById('resultScore').textContent  = score + ' / 10';
+        document.getElementById('resultPrice').textContent  = price ? 'SGD ' + price.toFixed(2) : '—';
+
+        if (imageUrl) {
+          const img = document.getElementById('resultImg');
+          img.src = imageUrl;
+          img.classList.remove('hidden');
+        }
+
+        // Pre-fill start price
+        if (price) document.getElementById('startPrice').value = price.toFixed(2);
+
+        // Sidebar summary
+        const bullets = document.getElementById('sidebarBullets');
+        bullets.innerHTML =
+          '<li>Brand / Model: <strong style="color:var(--text)">' + brand + ' ' + model + '</strong></li>' +
+          '<li>Condition Score: <strong style="color:var(--accent)">' + score + ' / 10</strong></li>' +
+          '<li>Suggested Price: <strong style="color:var(--success)">SGD ' + (price ? price.toFixed(2) : '—') + '</strong></li>' +
+          '<li>Image saved to S3.</li>';
+        document.getElementById('sidebarResults').style.display = '';
+
+        // Transition to step 2
+        progressCard.classList.remove('visible');
+        step2El.classList.remove('hidden');
+        step1Indicator.classList.remove('active');
+        step1Indicator.classList.add('done');
+        step2Indicator.classList.add('active');
+
+      } catch(err) {
+        progressCard.classList.remove('visible');
+        step1El.classList.remove('hidden');
+        alert('Analysis failed: ' + err.message);
+      }
+    });
+
+    // ── Back button ──────────────────────────────────────────────────
+    backBtn.addEventListener('click', function() {
+      step2El.classList.add('hidden');
+      step1El.classList.remove('hidden');
+      step1Indicator.classList.add('active');
+      step1Indicator.classList.remove('done');
+      step2Indicator.classList.remove('active');
+      successCard.classList.remove('visible');
+      errorCard.classList.remove('visible');
+    });
+
+    // ── Step 2 → Create Camera + Auction ─────────────────────────────
+    listingForm.addEventListener('submit', async function(e) {
       e.preventDefault();
       successCard.classList.remove('visible');
       errorCard.classList.remove('visible');
 
-      const payload = {
-        seller_id: Number(sellerIdInput.value),
-        camera_id: Number(document.getElementById('cameraId').value),
-        start_price: Number(document.getElementById('startPrice').value),
-        end_time: document.getElementById('endDate').value
-      };
+      const startPrice = Number(document.getElementById('startPrice').value);
+      const endTime    = document.getElementById('endDate').value;
 
-      if (!payload.seller_id || !payload.camera_id || !payload.start_price || !payload.end_time) {
-        errorMsg.textContent = 'Please fill in all fields before creating the auction.';
+      if (!startPrice || !endTime) {
+        errorMsg.textContent = 'Please fill in start price and end date.';
         errorCard.classList.add('visible');
         return;
       }
 
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Creating Auction…';
+      submitBtn.textContent = 'Saving camera…';
 
       try {
-        const response = await fetch(API_URL, {
+        // 1. Create camera record in cameradb
+        const brand   = document.getElementById('brand').value.trim();
+        const model   = document.getElementById('model').value.trim();
+        const shutter = Number(document.getElementById('shutterCount').value);
+        const imageUrl = analysisResult?.images?.[0]?.storage?.image_url || '';
+        const aiScore  = analysisResult?.condition_score ?? null;
+
+        const cameraPayload = {
+          seller_id:        storedUser.user_id,
+          model:            brand + ' ' + model,
+          shutter_count:    shutter,
+          ai_condition_score: aiScore,
+          condition_score:  aiScore,
+          s3_image_url:     imageUrl,
+          status:           'pending'
+        };
+
+        const camRes  = await fetch(CAMERA_SERVICE_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(cameraPayload)
+        });
+        const camData = await camRes.json();
+
+        if (!camRes.ok && camRes.status !== 201) {
+          throw new Error('Failed to save camera: ' + (camData?.error || camRes.status));
+        }
+
+        const cameraId = camData.camera_id;
+        if (!cameraId) throw new Error('Camera saved but no camera_id returned.');
+
+        submitBtn.textContent = 'Creating auction…';
+
+        // 2. Create auction in OutSystems
+        const auctionPayload = {
+          seller_id:   storedUser.user_id,
+          camera_id:   cameraId,
+          start_price: startPrice,
+          end_time:    endTime
+        };
+
+        // Guard: check camera isn't already listed in another auction
+        const camCheckRes = await fetch(`${CAMERA_SERVICE_URL}/${cameraId}`);
+        const camCheckData = await camCheckRes.json();
+        if (camCheckData.status === 'listed') {
+          throw new Error('This camera is already listed in an active auction.');
+        }
+
+        const aucRes  = await fetch(AUCTION_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(auctionPayload)
+        });
+        const aucData = await aucRes.json().catch(() => ({}));
+
+        if (!aucRes.ok && aucRes.status !== 201) {
+          throw new Error(aucData?.error || aucData?.message || 'Auction creation failed: ' + aucRes.status);
+        }
+
+        // Mark camera as listed so it can't be used in another auction
+        await fetch(`${CAMERA_SERVICE_URL}/${cameraId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'listed' })
         });
 
-        let data = {};
-        try { data = await response.json(); } catch (_) {}
+        const auctionId = aucData.auction_id || aucData?.data?.auction_id || cameraId;
+        document.getElementById('resultAuctionId').textContent = auctionId;
+        successCard.classList.add('visible');
+        listingForm.style.display = 'none';
 
-        if (response.ok || response.status === 201) {
-          const auctionId = data.auction_id || data?.data?.auction_id || 'Created';
-          document.getElementById('resultAuctionId').textContent = auctionId;
-          successCard.classList.add('visible');
-          listingForm.reset();
-          sellerIdInput.value = storedUser.user_id;
-          document.getElementById('cameraId').focus();
-        } else {
-          errorMsg.textContent = data?.error || data?.message || `Server returned status ${response.status}.`;
-          errorCard.classList.add('visible');
-        }
-      } catch (err) {
-        errorMsg.textContent = err.message || 'Network error. Please try again.';
+      } catch(err) {
+        errorMsg.textContent = err.message || 'Something went wrong. Please try again.';
         errorCard.classList.add('visible');
       } finally {
         submitBtn.disabled = false;
@@ -278,8 +566,30 @@
 
   <!-- Dot grid texture -->
   <div class="dot-grid"></div>
-
 <script>
+(function() {
+  const KEY = 'smugshotz_user';
+  const user = (function() { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch(e) { return null; } })();
+  const nav = document.getElementById('navActions');
+  if (!nav) return;
+  if (user && user.user_id) {
+    nav.innerHTML =
+      '<a href="../profile.html" class="nav-user" title="View profile">' +
+        '<span class="nav-avatar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>' +
+        '<span class="nav-username">' + (user.name || 'Profile') + '</span>' +
+      '</a>' +
+      '<button class="btn-ghost-sm" id="navLogout">Log Out</button>';
+    document.getElementById('navLogout').addEventListener('click', function() {
+      localStorage.removeItem(KEY);
+      localStorage.removeItem('user_id');
+      window.location.reload();
+    });
+  } else {
+    nav.innerHTML =
+      '<a href="./login.html" class="btn-ghost-sm">Sign In</a>' +
+      '<a href="../buyer-ui/index.html" class="btn-primary-sm">View Auctions</a>';
+  }
+})();
 </script>
 </body>
 </html>
