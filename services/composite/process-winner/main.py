@@ -57,7 +57,8 @@ def process_winner():
     auc_resp = http.get(f"{AUCTION_SERVICE}/auction/{auction_id}", timeout=5)
     if auc_resp.status_code != 200:
         return jsonify({"error": "Auction not found"}), 404
-    auction = auc_resp.json()
+    auc_json = auc_resp.json()
+    auction = auc_json.get("data", auc_json)
 
     winner_id = auction.get("highest_bidder_id")
     if not winner_id:
@@ -69,8 +70,10 @@ def process_winner():
     # 2. Get winner and seller info
     winner_resp = http.get(f"{USER_SERVICE}/user/{winner_id}", timeout=5)
     seller_resp = http.get(f"{USER_SERVICE}/user/{auction['seller_id']}", timeout=5)
-    winner = winner_resp.json() if winner_resp.status_code == 200 else {}
-    seller = seller_resp.json() if seller_resp.status_code == 200 else {}
+    winner_json = winner_resp.json() if winner_resp.status_code == 200 else {}
+    seller_json = seller_resp.json() if seller_resp.status_code == 200 else {}
+    winner = winner_json.get("data", winner_json)
+    seller = seller_json.get("data", seller_json)
 
     # 3. Create pending order
     order_payload = {
@@ -92,8 +95,8 @@ def process_winner():
             "auction_id": auction_id,
             "order_id": order["order_id"],
             "winner_id": winner_id,
-            "winner_telegram": winner.get("telegram_handle"),
-            "seller_telegram": seller.get("telegram_handle"),
+            "winner_telegram": winner.get("telegram_chat_id"),
+            "seller_telegram": seller.get("telegram_chat_id"),
             "amount": auction["current_highest_bid"],
         },
     )
