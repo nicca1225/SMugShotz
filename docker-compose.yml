@@ -4,6 +4,7 @@ version: "3.9"
 networks:
   digicam-net:
     driver: bridge
+    name: digicam-net
 
 # ─── Named volumes ────────────────────────────────────────────────────────────
 volumes:
@@ -16,12 +17,11 @@ services:
   # ── Infrastructure ──────────────────────────────────────────────────────────
 
   traefik:
-    image: traefik:v3.0
+    image: traefik:v2.11
     ports:
       - "80:80"
       - "8080:8080"   # Dashboard (dev only)
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./gateway/traefik.yml:/traefik.yml:ro
     networks: [digicam-net]
 
@@ -201,15 +201,16 @@ services:
   process-winner:
     build: ./services/composite/process-winner
     environment:
-      # USER_SERVICE_URL: http://user:5001
-      # AUCTION_SERVICE_URL: http://auction:5003
+      USER_SERVICE_URL: https://personal-vsev7crp.outsystemscloud.com/User/rest/User
+      AUCTION_SERVICE_URL: https://personal-vsev7crp.outsystemscloud.com/Auction/rest/Auction
       ORDER_SERVICE_URL: http://order:5004
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
     depends_on:
       rabbitmq:
         condition: service_healthy
     networks: [digicam-net]
-
+    ports:
+      - "5012:5012"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.process-winner.rule=PathPrefix(`/process-winner`) || PathPrefix(`/rollback`)"
