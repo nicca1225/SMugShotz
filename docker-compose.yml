@@ -20,9 +20,11 @@ services:
     image: traefik:v2.11
     ports:
       - "80:80"
-      - "8080:8080"   # Dashboard (dev only)
+      - "8081:8080"   # Dashboard (dev only)
     volumes:
       - ./gateway/traefik.yml:/traefik.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
     networks: [digicam-net]
 
   mysql:
@@ -31,7 +33,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
       MYSQL_ROOT_HOST: "%"
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql-data:/var/lib/mysql
       # Each service owns its init.sql — numbered so MySQL runs them in order
@@ -141,27 +143,24 @@ services:
 
   # ── Composite Services ──────────────────────────────────────────────────────
 
-  # create-auction:
-  #   build: ./services/composite/create-auction
-  #   environment:
-  #     # USER_SERVICE_URL: http://user:5001
-  #     CAMERA_SERVICE_URL: http://camera:5002
-  #     # AUCTION_SERVICE_URL: http://auction:5003
-  #     RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
-  #     AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-  #     AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-  #     AWS_REGION: ${AWS_REGION:-ap-southeast-1}
-  #     S3_BUCKET: ${S3_BUCKET:-digicam-images}
-  #     GOOGLE_VISION_API_KEY: ${GOOGLE_VISION_API_KEY}
-  #     PRICE_MODEL_URL: http://price-model:5100
-  #   depends_on:
-  #     rabbitmq:
-  #       condition: service_healthy
-  #   networks: [digicam-net]
-  #   labels:
-  #     - "traefik.enable=true"
-  #     - "traefik.http.routers.create-auction.rule=PathPrefix(`/auction/create`)"
-  #     - "traefik.http.services.create-auction.loadbalancer.server.port=5010"
+  create-auction:
+    build: ./services/composite/create-auction
+    environment:
+      USER_SERVICE_URL: https://personal-vsev7crp.outsystemscloud.com/User/rest/User
+      CAMERA_SERVICE_URL: http://camera:5002
+      AUCTION_CREATE_URL: https://personal-vsev7crp.outsystemscloud.com/Auction/rest/Auction/Auction
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - digicam-net
+    ports:
+    - "5010:5010"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.create-auction.rule=PathPrefix(`/auction/create`)"
+      - "traefik.http.services.create-auction.loadbalancer.server.port=5010"
 
   process-camera-details:
     build: ./services/composite/process-camera-details
