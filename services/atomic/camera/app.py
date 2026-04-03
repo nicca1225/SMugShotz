@@ -25,10 +25,26 @@ class Camera(db.Model):
     status = db.Column(db.String(50), default="pending")
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
+def init_db_with_retry(max_retries=20, delay_seconds=2):
+    last_error = None
 
-with app.app_context():
-    db.create_all()
+    for attempt in range(1, max_retries + 1):
+        try:
+            with app.app_context():
+                db.create_all()
+            print(f"[camera] database ready on attempt {attempt}")
+            return
+        except OperationalError as exc:
+            last_error = exc
+            print(
+                f"[camera] database not ready yet "
+                f"(attempt {attempt}/{max_retries}): {exc}"
+            )
+            time.sleep(delay_seconds)
 
+    raise last_error
+
+init_db_with_retry()
 
 @app.route("/camera", methods=["POST"])
 def create_camera():
