@@ -12,5 +12,7 @@ providers:
     exposedByDefault: false
     network: digicam-net
 
+accessLog: {}
+
 log:
   level: INFO
