@@ -148,7 +148,7 @@ services:
     build: ./services/composite/create-auction
     environment:
       USER_SERVICE_URL: https://personal-vsev7crp.outsystemscloud.com/User/rest/User
-      CAMERA_SERVICE_URL: http://camera:5002
+      CAMERA_SERVICE_URL: http://traefik
       AUCTION_CREATE_URL: https://personal-vsev7crp.outsystemscloud.com/Auction/rest/Auction/Auction
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
     depends_on:
@@ -170,7 +170,8 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_REGION: ${AWS_REGION:-ap-southeast-2}
       AWS_S3_BUCKET: ${AWS_S3_BUCKET:-smugshots-857481978752-ap-southeast-2-an}
-      PRICE_MODEL_URL: http://price-model:5000/predict-price
+      PRICE_MODEL_URL: http://traefik/predict-price
+      CAMERA_SERVICE_URL: http://traefik
       GOOGLE_APPLICATION_CREDENTIALS: /app/keys/esd-project-491106-c75374412546.json
     ports:
       - "5001:5001"
