@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 # Assume its base URL comes from environment variable with a reasonable default
 PRICE_MODEL_URL = os.environ.get('PRICE_MODEL_URL', 'http://localhost:5000/predict-price')
+CAMERA_SERVICE_URL = os.environ.get("CAMERA_SERVICE_URL", "http://camera:5002")
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
 CAMERA_KEYWORDS = {
     "camera", "camera lens", "photographic equipment", "digital camera", "lens", "slr", "reflex camera", "photography"
@@ -306,6 +307,30 @@ def get_price_recommendation(brand, model, shutter_count, condition_score):
         logger.exception("Error calling price service")
         return False, None
 
+
+def create_camera_record(camera_payload):
+    """
+    Create a pending camera record in the atomic camera service.
+    """
+    try:
+        response = requests.post(f"{CAMERA_SERVICE_URL}/camera", json=camera_payload, timeout=8)
+    except requests.RequestException:
+        logger.exception("Error calling camera service")
+        return False, None, "Failed to save camera details."
+
+    if response.status_code != 201:
+        try:
+            payload = response.json()
+            error = payload.get("error") or payload.get("message") or "Failed to save camera details."
+        except ValueError:
+            error = f"Camera service returned HTTP {response.status_code}."
+        return False, None, error
+
+    try:
+        return True, response.json(), None
+    except ValueError:
+        return False, None, "Camera service returned an invalid response."
+
 @app.route('/process-camera-details', methods=['POST'])
 def process_camera_details():
     is_env_valid, missing_env_vars = validate_required_env_vars()
@@ -328,7 +353,10 @@ def process_camera_details():
     if not image_files and "image" in request.files and request.files["image"].filename:
         image_files = [request.files["image"]]
 
-    seller_id = request.form.get("seller_id", "unknown-seller").strip() or "unknown-seller"
+    seller_id_raw = request.form.get("seller_id", "unknown-seller").strip() or "unknown-seller"
+    raw_brand = request.form.get("brand", "").strip()
+    raw_model = request.form.get("model", "").strip()
+    seller_id = seller_id_raw
 
     analysis_items = []
     primary_condition_score = None
@@ -398,11 +426,35 @@ def process_camera_details():
     
     if not success:
         return format_error_response(502, "Failed to get price recommendation.", 502)
-        
+
+    try:
+        seller_id_int = int(seller_id_raw)
+    except (TypeError, ValueError):
+        return format_error_response(400, "Invalid seller_id.", 400, errors=["seller_id must be an integer"])
+
+    camera_payload = {
+        "seller_id": seller_id_int,
+        "model": f"{raw_brand} {raw_model}".strip(),
+        "shutter_count": parsed_data["shutter_count"],
+        "condition_score": primary_condition_score,
+        "ai_condition_score": primary_condition_score,
+        "s3_image_url": analysis_items[0]["storage"]["image_url"],
+        "status": "pending",
+    }
+
+    camera_created, camera_data, camera_error = create_camera_record(camera_payload)
+    if not camera_created:
+        return format_error_response(502, camera_error, 502)
+
+    camera_id = camera_data.get("camera_id")
+    if not camera_id:
+        return format_error_response(502, "Camera service returned no camera_id.", 502)
+
     # 6. Return one clean combined response
     return format_success_response(
         {
             "seller_id": seller_id,
+            "camera_id": camera_id,
             "images": analysis_items,
             "condition_score": primary_condition_score,
             "pricing": pricing_data
