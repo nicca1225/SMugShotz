@@ -106,7 +106,7 @@ def normalise_end_time(raw_end_time: Any):
     return end_time, None
 
 
-def build_create_payload(data: dict, camera: dict) -> Tuple[Optional[dict], Optional[Tuple[Any, int]]]:
+def build_create_payload(data: dict, camera: dict, s3_image_url: str = "") -> Tuple[Optional[dict], Optional[Tuple[Any, int]]]:
     seller_id = data.get("seller_id")
     camera_id = data.get("camera_id")
     start_price = data.get("start_price")
@@ -143,6 +143,7 @@ def build_create_payload(data: dict, camera: dict) -> Tuple[Optional[dict], Opti
         "status": DEFAULT_AUCTION_STATUS,
         "current_highest_bid": 0,
         "highest_bidder_id": None,
+        "image_url": s3_image_url,
     }
     return payload, None
 
@@ -196,7 +197,7 @@ def process_create_auction():
     if camera_error:
         return camera_error
 
-    create_payload, payload_error = build_create_payload(data, camera)
+    create_payload, payload_error = build_create_payload(data, camera, s3_image_url=data.get("s3_image_url", ""))
     if payload_error:
         return payload_error
 
