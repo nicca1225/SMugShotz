@@ -3,12 +3,12 @@ import re
 import json
 import statistics
 import requests
-from bs4 import BeautifulSoup
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
 CACHE_FILE = 'prices.json'
+SERPAPI_KEY = os.environ.get('SERPAPI_KEY', '')
 
 def normalize_camera_key(brand, model):
     """Normalize brand and model keys for consistent cache lookup."""
@@ -85,41 +85,40 @@ def save_cached_prices(cache):
     with open(CACHE_FILE, 'w') as f:
         json.dump(cache, f, indent=2)
 
-def scrape_prices(brand, model):
+def fetch_serpapi_prices(brand, model):
     """
-    Scrape comparable used camera listing prices from a public webpage.
+    Fetch comparable sold camera listing prices from eBay via SerpAPI.
     """
-    search_query = f"{brand} {model}".replace(' ', '+')
-    # Use reliable webscraper.io test-site instead of live sites to prevent bot blockages on demo
-    url = f"https://webscraper.io/test-sites/e-commerce/allinone/computers/laptops?search={search_query}"
-    
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
-    
     prices = []
+    if not SERPAPI_KEY:
+        print("SERPAPI_KEY not set, skipping SerpAPI fetch.")
+        return prices
+
+    params = {
+        'engine': 'ebay',
+        '_nkw': f"{brand} {model} used",
+        'filters': 'Sold',
+        '_ipg': '25',
+        'api_key': SERPAPI_KEY
+    }
+
     try:
-        # Added a robust timeout to avoid freezing during network errors
-        response = requests.get(url, headers=headers, timeout=5)
+        response = requests.get('https://serpapi.com/search.json', params=params, timeout=10)
         if response.status_code == 200:
-            soup = BeautifulSoup(response.text, 'html.parser')
-            price_elements = soup.find_all('h4', class_='price')
-            
-            modifier = len(brand) + len(model)
-            
-            for el in price_elements:
-                text = el.get_text()
-                cleaned = text.replace('$', '').replace(',', '').strip()
-                try:
-                    price_val = float(cleaned) + (modifier * 15.5)
-                    prices.append(round(price_val, 2))
-                except (ValueError, TypeError):
-                    continue
+            data = response.json()
+            for item in data.get('organic_results', []):
+                price = item.get('price', {})
+                extracted = price.get('extracted')
+                if extracted is not None:
+                    try:
+                        prices.append(round(float(extracted), 2))
+                    except (ValueError, TypeError):
+                        continue
     except requests.RequestException as e:
-        print(f"Scraping network error: {e}")
+        print(f"SerpAPI network error: {e}")
     except Exception as e:
-        print(f"Scraping parsing error: {e}")
-        
+        print(f"SerpAPI parsing error: {e}")
+
     return prices
 
 def remove_outliers(prices):
@@ -175,13 +174,13 @@ def predict_price():
     # 2. Normalize Key for Cache Interactions
     camera_key = normalize_camera_key(brand, model)
     
-    # 3. Try Scraping
-    scraped_prices = scrape_prices(brand, model)
-    
+    # 3. Fetch prices from eBay via SerpAPI
+    scraped_prices = fetch_serpapi_prices(brand, model)
+
     number_of_prices_used = 0
     price_source = ""
     comparable_prices = []
-    
+
     if len(scraped_prices) >= 3:
         # We got enough data from live scraping
         price_source = "scraped"
@@ -193,7 +192,7 @@ def predict_price():
             
         median_val = round(statistics.median(filtered), 2)
         
-        # As requested, store the purely derived median in the json cache representing this successful scrape
+        # Store the derived median in the json cache representing this successful fetch
         cache = load_cached_prices()
         cache[camera_key] = [median_val]
         save_cached_prices(cache)

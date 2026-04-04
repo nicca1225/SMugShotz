@@ -136,6 +136,8 @@ services:
     build: ./services/atomic/price-model
     ports:
       - "5000:5000"
+    environment:
+      - SERPAPI_KEY=${SERPAPI_KEY}
     networks: [digicam-net]
     labels:
       - "traefik.enable=true"
