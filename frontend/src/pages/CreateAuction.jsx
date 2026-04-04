@@ -3,8 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { getUser } from '../utils/auth.js';
 
 const PROCESS_CAMERA_URL = 'http://localhost/process-camera-details';
-const CAMERA_SERVICE_URL = 'http://localhost/camera';
-const AUCTION_API_URL    = 'http://localhost:5010/auction/create';
+const AUCTION_API_URL    = 'http://localhost/auction/create';
 
 function defaultEndDate() {
   const pad = n => String(n).padStart(2, '0');
@@ -103,8 +102,14 @@ export default function CreateAuction() {
     setSuccessAuctionId(null);
 
     const sp = Number(startPrice);
+    const cameraId = Number(analysisResult?.camera_id);
     if (!sp || !endDate) {
       setErrorMsg('Please fill in start price and end date.');
+      return;
+    }
+
+    if (!cameraId) {
+      setErrorMsg('Camera analysis must complete successfully before creating an auction.');
       return;
     }
 
@@ -112,38 +117,7 @@ export default function CreateAuction() {
 
     try {
       const imageUrl = analysisResult?.images?.[0]?.storage?.image_url || '';
-      const aiScore  = analysisResult?.condition_score ?? null;
-
-      const cameraPayload = {
-        seller_id:           storedUser.user_id,
-        model:               brand + ' ' + model,
-        shutter_count:       Number(shutterCount),
-        ai_condition_score:  aiScore,
-        condition_score:     aiScore,
-        s3_image_url:        imageUrl,
-        status:              'pending'
-      };
-
-      const camRes  = await fetch(CAMERA_SERVICE_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(cameraPayload)
-      });
-      const camData = await camRes.json();
-
-      if (!camRes.ok && camRes.status !== 201) {
-        throw new Error('Failed to save camera: ' + (camData?.error || camRes.status));
-      }
-
-      const cameraId = camData.camera_id;
-      if (!cameraId) throw new Error('Camera saved but no camera_id returned.');
-
-      // Guard: check camera isn't already listed
-      const camCheckRes = await fetch(`${CAMERA_SERVICE_URL}/${cameraId}`);
-      const camCheckData = await camCheckRes.json();
-      if (camCheckData.status === 'listed') {
-        throw new Error('This camera is already listed in an active auction.');
-      }
+      const suggestedPrice = analysisResult?.pricing?.suggested_price ?? null;
 
       // Convert local datetime-local value to UTC ISO string for backend
       const endTimeUTC = new Date(endDate).toISOString().slice(0, 19);
@@ -152,8 +126,9 @@ export default function CreateAuction() {
         seller_id:    storedUser.user_id,
         camera_id:    cameraId,
         start_price:  sp,
-        end_time:     endTimeUTC,
-        s3_image_url: imageUrl
+        end_time:     endDate,
+        s3_image_url: imageUrl,
+        suggested_price: suggestedPrice
       };
 
       const aucRes  = await fetch(AUCTION_API_URL, {
@@ -166,13 +141,6 @@ export default function CreateAuction() {
       if (!aucRes.ok && aucRes.status !== 201) {
         throw new Error(aucData?.error || aucData?.message || 'Auction creation failed: ' + aucRes.status);
       }
-
-      // Mark camera as listed
-      await fetch(`${CAMERA_SERVICE_URL}/${cameraId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'listed' })
-      });
 
       const auctionId = aucData.auction_id || aucData?.data?.auction_id || cameraId;
       setSuccessAuctionId(auctionId);
