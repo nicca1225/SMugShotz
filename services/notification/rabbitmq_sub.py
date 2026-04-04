@@ -6,9 +6,11 @@ to the appropriate Telegram notification handler.
 import os
 import json
 import pika
+import requests
 from adapters.telegram_wrapper import send_message
 
 RABBITMQ_URL = os.environ.get("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/")
+PROCESS_PAYMENT_URL = os.environ.get("PROCESS_PAYMENT_URL", "http://process-payment:5013")
 
 ROUTING_KEYS = [
     "auction.created",
@@ -57,10 +59,29 @@ def handle_winner_notify(payload: dict):
     auction_id = payload.get("auction_id")
     order_id = payload.get("order_id")
 
+    # Get Stripe checkout URL from process-payment service
+    checkout_url = None
+    try:
+        resp = requests.post(
+            f"{PROCESS_PAYMENT_URL}/process-payment",
+            json={
+                "order_id": order_id,
+                "amount": amount,
+                "description": f"Digicam Auction #{auction_id}",
+            },
+            timeout=10,
+        )
+        if resp.status_code == 200:
+            checkout_url = resp.json().get("checkout_url")
+    except Exception as e:
+        print(f"[notification] Failed to get checkout URL: {e}")
+
+    payment_line = f"\nPay here: {checkout_url}" if checkout_url else "\nPlease log in to complete your payment."
+
     send_message(
         winner_telegram,
         f"Congratulations! You won auction #{auction_id} with a bid of SGD {amount}.\n"
-        f"Order #{order_id} created. Please complete payment to secure your camera.",
+        f"Order #{order_id} created.{payment_line}",
     )
     send_message(
         seller_telegram,

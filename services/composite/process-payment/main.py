@@ -14,6 +14,7 @@ Flow (webhook):
 
 import os
 import json
+import pika
 import stripe
 from flask import Flask, request, jsonify
 import requests as http
@@ -25,6 +26,25 @@ ORDER_SERVICE = os.environ.get("ORDER_SERVICE_URL", "http://order:5004")
 PAYMENT_SERVICE = os.environ.get("PAYMENT_SERVICE_URL", "http://payment:5005")
 PROCESS_WINNER = os.environ.get("PROCESS_WINNER_URL", "http://process-winner:5012")
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+RABBITMQ_URL = os.environ.get("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/")
+USER_SERVICE = os.environ.get("USER_SERVICE_URL", "https://personal-vsev7crp.outsystemscloud.com/User/rest/User")
+
+
+def publish_event(event_type: str, payload: dict):
+    try:
+        params = pika.URLParameters(RABBITMQ_URL)
+        conn = pika.BlockingConnection(params)
+        ch = conn.channel()
+        ch.exchange_declare(exchange="digicam", exchange_type="topic", durable=True)
+        ch.basic_publish(
+            exchange="digicam",
+            routing_key=event_type,
+            body=json.dumps(payload),
+            properties=pika.BasicProperties(content_type="application/json", delivery_mode=2),
+        )
+        conn.close()
+    except Exception as exc:
+        app.logger.warning(f"Failed to publish {event_type}: {exc}")
 
 
 @app.route("/process-payment", methods=["POST"])
@@ -79,6 +99,28 @@ def stripe_webhook():
                     "status": "paid",
                 },
                 timeout=5,
+            )
+
+            # Get buyer's telegram so notification service can send confirmation
+            buyer_telegram = None
+            try:
+                order_resp = http.get(f"{ORDER_SERVICE}/order/{order_id}", timeout=5)
+                if order_resp.status_code == 200:
+                    buyer_id = order_resp.json().get("buyer_id")
+                    user_resp = http.get(f"{USER_SERVICE}/user/{buyer_id}", timeout=5)
+                    if user_resp.status_code == 200:
+                        user_data = user_resp.json()
+                        user = user_data.get("data", user_data)
+                        buyer_telegram = user.get("telegram_chat_id")
+            except Exception as exc:
+                app.logger.warning(f"Could not fetch buyer telegram: {exc}")
+
+            publish_event(
+                "order.confirmed",
+                {
+                    "order_id": order_id,
+                    "buyer_telegram": buyer_telegram,
+                },
             )
 
     elif event_type in ("checkout.session.expired", "payment_intent.payment_failed"):

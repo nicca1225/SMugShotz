@@ -7,6 +7,8 @@ import CreateAuction from './pages/CreateAuction.jsx';
 import Login from './pages/Login.jsx';
 import Signup from './pages/Signup.jsx';
 import Profile from './pages/Profile.jsx';
+import PaymentSuccess from './pages/PaymentSuccess.jsx';
+import PaymentCancel from './pages/PaymentCancel.jsx';
 
 export default function App() {
   return (
@@ -21,6 +23,8 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/payment/success" element={<PaymentSuccess />} />
+        <Route path="/payment/cancel" element={<PaymentCancel />} />
       </Routes>
     </BrowserRouter>
   );

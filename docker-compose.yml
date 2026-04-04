@@ -221,10 +221,15 @@ services:
       ORDER_SERVICE_URL: http://order:5004
       PAYMENT_SERVICE_URL: http://payment:5005
       PROCESS_WINNER_URL: http://process-winner:5012
+      USER_SERVICE_URL: https://personal-vsev7crp.outsystemscloud.com/User/rest/User
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
       PAYMENT_SUCCESS_URL: ${PAYMENT_SUCCESS_URL:-http://localhost/payment/success}
       PAYMENT_CANCEL_URL: ${PAYMENT_CANCEL_URL:-http://localhost/payment/cancel}
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
     networks: [digicam-net]
     labels:
       - "traefik.enable=true"
@@ -246,6 +251,7 @@ services:
     environment:
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      PROCESS_PAYMENT_URL: http://process-payment:5013
     depends_on:
       rabbitmq:
         condition: service_healthy
