@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime
 from typing import Any, Dict, Optional, Tuple
 
 import pika
@@ -56,6 +57,34 @@ def publish_event(event_type: str, payload: dict):
         conn.close()
     except Exception as exc:
         app.logger.warning(f"Failed to publish {event_type}: {exc}")
+
+
+def publish_delayed_event(event_type: str, payload: dict, delay_ms: int):
+    """Publish to the delayed exchange — message fires after delay_ms milliseconds."""
+    try:
+        params = pika.URLParameters(RABBITMQ_URL)
+        conn = pika.BlockingConnection(params)
+        ch = conn.channel()
+        ch.exchange_declare(
+            exchange="digicam-delayed",
+            exchange_type="x-delayed-message",
+            durable=True,
+            arguments={"x-delayed-type": "topic"},
+        )
+        ch.basic_publish(
+            exchange="digicam-delayed",
+            routing_key=event_type,
+            body=json.dumps(payload),
+            properties=pika.BasicProperties(
+                content_type="application/json",
+                delivery_mode=2,
+                headers={"x-delay": delay_ms},
+            ),
+        )
+        conn.close()
+        app.logger.info(f"Scheduled {event_type} in {delay_ms}ms ({delay_ms // 60000} min)")
+    except Exception as exc:
+        app.logger.warning(f"Failed to schedule {event_type}: {exc}")
 
 
 def get_user(user_id: int):
@@ -224,6 +253,14 @@ def process_create_auction():
             "condition_score": camera.get("condition_score") or camera.get("ai_condition_score"),
         },
     )
+
+    # Schedule automatic winner processing when auction expires
+    try:
+        end_dt = datetime.fromisoformat(create_payload["end_time"].replace("T", " "))
+        delay_ms = max(0, int((end_dt - datetime.utcnow()).total_seconds() * 1000))
+        publish_delayed_event("auction.expired", {"auction_id": auction_id}, delay_ms)
+    except Exception as exc:
+        app.logger.warning(f"Could not schedule auction expiry: {exc}")
 
     return (
         jsonify(

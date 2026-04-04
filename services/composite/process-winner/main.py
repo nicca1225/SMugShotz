@@ -17,6 +17,7 @@ Flow (rollback):
 
 import os
 import json
+import threading
 import pika
 from flask import Flask, request, jsonify
 import requests as http
@@ -138,5 +139,97 @@ def rollback():
     return jsonify({"message": "Rollback complete"})
 
 
+def handle_auction_expired(auction_id: int):
+    """Same logic as POST /process-winner but called from AMQP consumer."""
+    with app.app_context():
+        app.logger.info(f"[consumer] auction.expired fired for auction #{auction_id}")
+
+        auc_resp = http.get(f"{AUCTION_SERVICE}/auction/{auction_id}", timeout=5)
+        if auc_resp.status_code != 200:
+            app.logger.error(f"[consumer] Auction #{auction_id} not found")
+            return
+        auc_json = auc_resp.json()
+        auction = auc_json.get("data", auc_json)
+
+        winner_id = auction.get("highest_bidder_id")
+        if not winner_id:
+            http.put(f"{AUCTION_SERVICE}/auction/{auction_id}", json={"status": "failed"}, timeout=5)
+            publish_event("auction.failed", {"auction_id": auction_id, "reason": "no_bids"})
+            app.logger.info(f"[consumer] Auction #{auction_id} ended with no bids")
+            return
+
+        winner_resp = http.get(f"{USER_SERVICE}/user/{winner_id}", timeout=5)
+        seller_resp = http.get(f"{USER_SERVICE}/user/{auction['seller_id']}", timeout=5)
+        winner = (winner_resp.json() if winner_resp.status_code == 200 else {}).get("data", {})
+        seller = (seller_resp.json() if seller_resp.status_code == 200 else {}).get("data", {})
+
+        order_payload = {
+            "auction_id": auction_id,
+            "buyer_id": winner_id,
+            "seller_id": auction["seller_id"],
+            "amount": auction["current_highest_bid"],
+            "status": "pending",
+        }
+        order_resp = http.post(f"{ORDER_SERVICE}/order", json=order_payload, timeout=5)
+        if order_resp.status_code != 201:
+            app.logger.error(f"[consumer] Failed to create order for auction #{auction_id}")
+            return
+        order = order_resp.json()
+
+        publish_event(
+            "winner.notify",
+            {
+                "auction_id": auction_id,
+                "order_id": order["order_id"],
+                "winner_id": winner_id,
+                "winner_telegram": winner.get("telegram_chat_id"),
+                "seller_telegram": seller.get("telegram_chat_id"),
+                "amount": auction["current_highest_bid"],
+            },
+        )
+        app.logger.info(f"[consumer] Winner processed for auction #{auction_id}, order #{order['order_id']}")
+
+
+def start_consumer():
+    """Background thread: listens for auction.expired on the delayed exchange."""
+    import time
+    while True:
+        try:
+            params = pika.URLParameters(RABBITMQ_URL)
+            params.heartbeat = 60
+            conn = pika.BlockingConnection(params)
+            ch = conn.channel()
+
+            ch.exchange_declare(
+                exchange="digicam-delayed",
+                exchange_type="x-delayed-message",
+                durable=True,
+                arguments={"x-delayed-type": "topic"},
+            )
+            result = ch.queue_declare(queue="auction-expiry", durable=True)
+            ch.queue_bind(exchange="digicam-delayed", queue="auction-expiry", routing_key="auction.expired")
+            ch.basic_qos(prefetch_count=1)
+
+            def on_message(ch, method, properties, body):
+                try:
+                    payload = json.loads(body)
+                    auction_id = payload.get("auction_id")
+                    if auction_id:
+                        handle_auction_expired(int(auction_id))
+                    ch.basic_ack(delivery_tag=method.delivery_tag)
+                except Exception as e:
+                    app.logger.error(f"[consumer] Error: {e}")
+                    ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+
+            ch.basic_consume(queue="auction-expiry", on_message_callback=on_message)
+            app.logger.info("[consumer] Waiting for auction.expired events...")
+            ch.start_consuming()
+        except Exception as e:
+            app.logger.warning(f"[consumer] Connection lost: {e}. Retrying in 5s...")
+            time.sleep(5)
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5012, debug=True)
+    t = threading.Thread(target=start_consumer, daemon=True)
+    t.start()
+    app.run(host="0.0.0.0", port=5012, debug=False)
