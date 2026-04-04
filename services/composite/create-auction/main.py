@@ -119,6 +119,27 @@ def get_camera(camera_id: int):
     return camera, None
 
 
+def update_camera_status(camera_id: int, status: str):
+    try:
+        resp = http.put(
+            f"{CAMERA_SERVICE}/camera/{camera_id}",
+            json={"status": status},
+            timeout=8,
+        )
+    except http.RequestException as exc:
+        return False, f"Failed to reach camera service for update: {exc}"
+
+    if resp.status_code != 200:
+        try:
+            payload = resp.json()
+            details = payload.get("error") or payload.get("message") or resp.text[:300]
+        except ValueError:
+            details = resp.text[:300]
+        return False, f"Camera status update failed: {details}"
+
+    return True, None
+
+
 def normalise_end_time(raw_end_time: Any):
     if raw_end_time is None:
         return None, (jsonify({"error": "end_time is required"}), 400)
@@ -234,6 +255,10 @@ def process_create_auction():
     if create_error:
         return create_error
 
+    camera_updated, camera_update_error = update_camera_status(create_payload["camera_id"], "listed")
+    if not camera_updated:
+        app.logger.warning(camera_update_error)
+
     auction_id = (
         created_auction.get("auction_id")
         or created_auction.get("id")
@@ -268,6 +293,8 @@ def process_create_auction():
                 "message": "Auction created successfully",
                 "auction_id": auction_id,
                 "data": created_auction,
+                "camera_status_updated": camera_updated,
+                **({"camera_status_warning": camera_update_error} if camera_update_error else {}),
             }
         ),
         201,
