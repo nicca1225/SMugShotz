@@ -145,11 +145,14 @@ export default function CreateAuction() {
         throw new Error('This camera is already listed in an active auction.');
       }
 
+      // Convert local datetime-local value to UTC ISO string for backend
+      const endTimeUTC = new Date(endDate).toISOString().slice(0, 19);
+
       const auctionPayload = {
         seller_id:    storedUser.user_id,
         camera_id:    cameraId,
         start_price:  sp,
-        end_time:     endDate,
+        end_time:     endTimeUTC,
         s3_image_url: imageUrl
       };
 
