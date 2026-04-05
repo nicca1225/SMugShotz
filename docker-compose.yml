@@ -137,6 +137,8 @@ services:
 
   price-model:
     build: ./services/atomic/price-model
+    environment:
+      SERPAPI_KEY: ${SERPAPI_KEY}
     ports:
       - "5000:5000"
     networks: [digicam-net]

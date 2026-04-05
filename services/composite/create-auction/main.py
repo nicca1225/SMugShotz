@@ -282,7 +282,7 @@ def process_create_auction():
     # Schedule automatic winner processing when auction expires
     try:
         end_dt = datetime.fromisoformat(create_payload["end_time"].replace("T", " "))
-        delay_ms = max(0, int((end_dt - datetime.utcnow()).total_seconds() * 1000))
+        delay_ms = max(0, int((end_dt - datetime.now()).total_seconds() * 1000))
         publish_delayed_event("auction.expired", {"auction_id": auction_id}, delay_ms)
     except Exception as exc:
         app.logger.warning(f"Could not schedule auction expiry: {exc}")

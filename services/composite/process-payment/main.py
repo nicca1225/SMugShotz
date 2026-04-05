@@ -17,10 +17,12 @@ import json
 import pika
 import stripe
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import requests as http
 from adapters.stripe_wrapper import create_checkout_session, retrieve_session
 
 app = Flask(__name__)
+CORS(app)
 
 ORDER_SERVICE = os.environ.get("ORDER_SERVICE_URL", "http://order:5004")
 PAYMENT_SERVICE = os.environ.get("PAYMENT_SERVICE_URL", "http://payment:5005")

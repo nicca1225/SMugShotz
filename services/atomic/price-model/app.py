@@ -3,12 +3,15 @@ import re
 import json
 import statistics
 import requests
-from bs4 import BeautifulSoup
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 CACHE_FILE = 'prices.json'
+SERPAPI_KEY = os.environ.get('SERPAPI_KEY', '')
+USD_TO_SGD = 1.35
 
 def normalize_camera_key(brand, model):
     """Normalize brand and model keys for consistent cache lookup."""
@@ -87,39 +90,28 @@ def save_cached_prices(cache):
 
 def scrape_prices(brand, model):
     """
-    Scrape comparable used camera listing prices from a public webpage.
+    Fetch comparable used camera sold prices from eBay via SerpAPI.
     """
-    search_query = f"{brand} {model}".replace(' ', '+')
-    # Use reliable webscraper.io test-site instead of live sites to prevent bot blockages on demo
-    url = f"https://webscraper.io/test-sites/e-commerce/allinone/computers/laptops?search={search_query}"
-    
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
-    
     prices = []
+    if not SERPAPI_KEY:
+        print("SERPAPI_KEY not set, skipping price fetch")
+        return prices
     try:
-        # Added a robust timeout to avoid freezing during network errors
-        response = requests.get(url, headers=headers, timeout=5)
+        params = {
+            'engine': 'ebay',
+            '_nkw': f"{brand} {model} used",
+            'filters': 'Sold',
+            '_ipg': '25',
+            'api_key': SERPAPI_KEY,
+        }
+        response = requests.get('https://serpapi.com/search.json', params=params, timeout=10)
         if response.status_code == 200:
-            soup = BeautifulSoup(response.text, 'html.parser')
-            price_elements = soup.find_all('h4', class_='price')
-            
-            modifier = len(brand) + len(model)
-            
-            for el in price_elements:
-                text = el.get_text()
-                cleaned = text.replace('$', '').replace(',', '').strip()
-                try:
-                    price_val = float(cleaned) + (modifier * 15.5)
-                    prices.append(round(price_val, 2))
-                except (ValueError, TypeError):
-                    continue
-    except requests.RequestException as e:
-        print(f"Scraping network error: {e}")
+            for item in response.json().get('organic_results', []):
+                extracted = item.get('price', {}).get('extracted')
+                if extracted is not None:
+                    prices.append(round(float(extracted) * USD_TO_SGD, 2))
     except Exception as e:
-        print(f"Scraping parsing error: {e}")
-        
+        print(f"SerpAPI error: {e}")
     return prices
 
 def remove_outliers(prices):
