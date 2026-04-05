@@ -7,7 +7,7 @@ Flow:
 2. Fetch auction status & current bid (Auction Service)
 3. Validate bid amount > current_highest_bid and auction is active
 4. Update auction with new highest bid (Auction Service)
-5. Publish bid.outbid (previous bidder) and bid.confirmed (new bidder)
+5. Publish bid.outbid (previous bidder), bid.confirmed (new bidder), and bid.received (seller)
 """
 
 import os
@@ -57,6 +57,18 @@ def parse_service_payload(resp, service_name: str):
             jsonify({"error": f"{service_name} returned a non-JSON response"}),
             502,
         )
+
+
+def get_user_display(user: dict, fallback_user_id: int) -> str:
+    name = str(user.get("name") or user.get("Name") or "").strip()
+    if name:
+        return name
+
+    email = str(user.get("email") or user.get("Email") or "").strip()
+    if email:
+        return email
+
+    return f"User #{fallback_user_id}"
 
 
 def get_user(user_id: int):
@@ -227,6 +239,23 @@ def process_bid():
                 "bid_amount": bid_amount,
             },
         )
+
+    # 5c. Notify seller about the new bid
+    seller_id = auction.get("seller_id")
+    if seller_id is not None and seller_id != bidder_id:
+        seller, _ = get_user(seller_id)
+        if seller and seller.get("telegram_chat_id"):
+            publish_event(
+                "bid.received",
+                {
+                    "auction_id": auction_id,
+                    "seller_id": seller_id,
+                    "seller_telegram": seller["telegram_chat_id"],
+                    "bid_amount": bid_amount,
+                    "bidder_id": bidder_id,
+                    "bidder_display": get_user_display(bidder, bidder_id),
+                },
+            )
 
     return jsonify(
         {

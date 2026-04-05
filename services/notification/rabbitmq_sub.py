@@ -19,6 +19,7 @@ ROUTING_KEYS = [
     "auction.created",
     "bid.confirmed",
     "bid.outbid",
+    "bid.received",
     "winner.notify",
     "auction.failed",
     "order.confirmed",
@@ -72,6 +73,16 @@ def handle_bid_outbid(payload: dict):
         f"New highest bid: SGD {payload.get('new_highest_bid')}"
     )
     send_and_log(telegram, msg, "bid.outbid", "outbid_user")
+
+
+def handle_bid_received(payload: dict):
+    telegram = payload.get("seller_telegram")
+    msg = (
+        f"Your auction #{payload.get('auction_id')} received a new bid.\n"
+        f"Bid amount: SGD {payload.get('bid_amount')}\n"
+        f"Bidder: {payload.get('bidder_display')}"
+    )
+    send_and_log(telegram, msg, "bid.received", "seller")
 
 
 def handle_winner_notify(payload: dict):
@@ -135,6 +146,7 @@ HANDLERS = {
     "auction.created": handle_auction_created,
     "bid.confirmed": handle_bid_confirmed,
     "bid.outbid": handle_bid_outbid,
+    "bid.received": handle_bid_received,
     "winner.notify": handle_winner_notify,
     "auction.failed": handle_auction_failed,
     "order.confirmed": handle_order_confirmed,
