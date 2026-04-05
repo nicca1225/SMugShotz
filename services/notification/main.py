@@ -4,16 +4,20 @@ Starts the RabbitMQ subscriber in the main thread.
 Also exposes a minimal HTTP health endpoint.
 """
 
+import logging
+import os
 import threading
 from flask import Flask, jsonify
 from flask_cors import CORS
 import rabbitmq_sub
 
-app = Flask(__name__)
-CORS(app)
+logging.basicConfig(
+    level=os.environ.get("LOG_LEVEL", "INFO"),
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
 
-_consumer_thread = threading.Thread(target=rabbitmq_sub.start, daemon=True)
-_consumer_thread.start()
+app = Flask(__name__)
+logger = logging.getLogger(__name__)
 
 
 @app.route("/health")
@@ -22,4 +26,8 @@ def health():
 
 
 if __name__ == "__main__":
+    # Start RabbitMQ consumer in background thread
+    logger.info("Starting notification service")
+    t = threading.Thread(target=rabbitmq_sub.start, daemon=True)
+    t.start()
     app.run(host="0.0.0.0", port=5020)

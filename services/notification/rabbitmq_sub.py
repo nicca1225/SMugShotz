@@ -5,12 +5,15 @@ to the appropriate Telegram notification handler.
 
 import os
 import json
+import time
+import logging
 import pika
 import requests
 from adapters.telegram_wrapper import send_message
 
 RABBITMQ_URL = os.environ.get("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/")
 PROCESS_PAYMENT_URL = os.environ.get("PROCESS_PAYMENT_URL", "http://process-payment:5013")
+logger = logging.getLogger(__name__)
 
 ROUTING_KEYS = [
     "auction.created",
@@ -22,6 +25,25 @@ ROUTING_KEYS = [
 ]
 
 
+def send_and_log(chat_id: str, text: str, event_type: str, recipient_label: str) -> bool:
+    sent = send_message(chat_id, text)
+    if sent:
+        logger.info(
+            "Telegram message sent for %s to %s chat_id=%s",
+            event_type,
+            recipient_label,
+            chat_id,
+        )
+    else:
+        logger.warning(
+            "Telegram message failed for %s to %s chat_id=%s",
+            event_type,
+            recipient_label,
+            chat_id,
+        )
+    return sent
+
+
 def handle_auction_created(payload: dict):
     telegram = payload.get("seller_telegram")
     msg = (
@@ -31,7 +53,7 @@ def handle_auction_created(payload: dict):
         f"Suggested Price: SGD {payload.get('suggested_price')}\n"
         f"Condition Score: {payload.get('condition_score')}"
     )
-    send_message(telegram, msg)
+    send_and_log(telegram, msg, "auction.created", "seller")
 
 
 def handle_bid_confirmed(payload: dict):
@@ -40,7 +62,7 @@ def handle_bid_confirmed(payload: dict):
         f"Your bid of SGD {payload.get('bid_amount')} on auction "
         f"#{payload.get('auction_id')} has been confirmed!"
     )
-    send_message(telegram, msg)
+    send_and_log(telegram, msg, "bid.confirmed", "bidder")
 
 
 def handle_bid_outbid(payload: dict):
@@ -49,7 +71,7 @@ def handle_bid_outbid(payload: dict):
         f"You have been outbid on auction #{payload.get('auction_id')}!\n"
         f"New highest bid: SGD {payload.get('new_highest_bid')}"
     )
-    send_message(telegram, msg)
+    send_and_log(telegram, msg, "bid.outbid", "outbid_user")
 
 
 def handle_winner_notify(payload: dict):
@@ -73,32 +95,31 @@ def handle_winner_notify(payload: dict):
         )
         if resp.status_code == 200:
             checkout_url = resp.json().get("checkout_url")
-    except Exception as e:
-        print(f"[notification] Failed to get checkout URL: {e}")
+    except Exception:
+        logger.exception("Failed to get checkout URL for winner.notify")
 
     payment_line = f"\nPay here: {checkout_url}" if checkout_url else "\nPlease log in to complete your payment."
 
-    send_message(
+    send_and_log(
         winner_telegram,
         f"Congratulations! You won auction #{auction_id} with a bid of SGD {amount}.\n"
         f"Order #{order_id} created.{payment_line}",
+        "winner.notify",
+        "winner",
     )
-    send_message(
+    send_and_log(
         seller_telegram,
         f"Your auction #{auction_id} has ended! Winning bid: SGD {amount}.\n"
         f"The buyer has been notified to complete payment.",
+        "winner.notify",
+        "seller",
     )
 
 
 def handle_auction_failed(payload: dict):
     reason = payload.get("reason", "unknown")
-    msg = (
-        f"Auction #{payload.get('auction_id')} has failed.\n"
-        f"Reason: {reason}. Please re-list your item."
-    )
     # In a full implementation, we'd look up all bidder telegrams here
-    # For now log it
-    print(f"[notification] auction.failed: {payload}")
+    logger.warning("auction.failed received: auction_id=%s reason=%s payload=%s", payload.get("auction_id"), reason, payload)
 
 
 def handle_order_confirmed(payload: dict):
@@ -107,7 +128,7 @@ def handle_order_confirmed(payload: dict):
         f"Your order #{payload.get('order_id')} has been confirmed!\n"
         f"The seller will be in touch soon."
     )
-    send_message(telegram, msg)
+    send_and_log(telegram, msg, "order.confirmed", "buyer")
 
 
 HANDLERS = {
@@ -124,18 +145,17 @@ def on_message(ch, method, properties, body):
     try:
         payload = json.loads(body)
         routing_key = method.routing_key
-        print(f"[notification] Received {routing_key}: {payload}")
+        logger.info("Received %s payload=%s", routing_key, payload)
         handler = HANDLERS.get(routing_key)
         if handler:
             handler(payload)
         ch.basic_ack(delivery_tag=method.delivery_tag)
-    except Exception as e:
-        print(f"[notification] Error processing message: {e}")
+    except Exception:
+        logger.exception("Error processing message")
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
 
 def start():
-    import time
     while True:
         try:
             params = pika.URLParameters(RABBITMQ_URL)
@@ -151,10 +171,10 @@ def start():
 
             ch.basic_qos(prefetch_count=1)
             ch.basic_consume(queue=queue_name, on_message_callback=on_message)
-            print("[notification] Waiting for messages...")
+            logger.info("Connected to RabbitMQ and waiting for messages")
             ch.start_consuming()
-        except Exception as e:
-            print(f"[notification] Connection lost: {e}. Retrying in 5s...")
+        except Exception:
+            logger.exception("RabbitMQ connection lost; retrying in 5s")
             time.sleep(5)
 
 
