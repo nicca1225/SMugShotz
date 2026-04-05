@@ -300,13 +300,13 @@ export default function AuctionDetail() {
             <div className="breadcrumb">
               <Link to="/auctions">Auctions</Link>
               <span className="breadcrumb-sep">›</span>
-              <span>{auction.camera_model}</span>
+              <span>{cameraData?.model || auction.camera_model}</span>
             </div>
 
             <div className={`status-badge ${activeAuction ? 'live' : 'ended'}`}>
               {activeAuction ? 'LIVE' : 'ENDED'}
             </div>
-            <h1 className="listing-title">{auction.camera_model}</h1>
+            <h1 className="listing-title">{cameraData?.model || auction.camera_model}</h1>
             <p className="listing-subtitle">Auction #{auction.auction_id} · Listed by Seller #{auction.seller_id}</p>
 
             <div className="listing-grid">

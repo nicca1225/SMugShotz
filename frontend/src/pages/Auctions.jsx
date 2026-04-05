@@ -43,6 +43,7 @@ function normaliseAuction(raw) {
 export default function Auctions() {
   const navigate = useNavigate();
   const [allAuctions, setAllAuctions] = useState([]);
+  const [cameraModels, setCameraModels] = useState({});
   const [currentFilter, setCurrentFilter] = useState('all');
   const [auctionCount, setAuctionCount] = useState('Loading…');
   const [bidModal, setBidModal] = useState(null); // { auction }
@@ -70,7 +71,20 @@ export default function Auctions() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const list = Array.isArray(data) ? data : (data.Out1 || []);
-      setAllAuctions(list.map(normaliseAuction).filter(a => a.auction_id && a.seller_id));
+      const auctions = list.map(normaliseAuction).filter(a => a.auction_id && a.seller_id);
+      setAllAuctions(auctions);
+
+      // Fetch camera models for all unique camera_ids
+      const uniqueIds = [...new Set(auctions.map(a => a.camera_id).filter(Boolean))];
+      const entries = await Promise.all(
+        uniqueIds.map(id =>
+          fetch(`${CAMERA_SERVICE_URL}/${id}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(cam => cam ? [id, cam.model] : null)
+            .catch(() => null)
+        )
+      );
+      setCameraModels(Object.fromEntries(entries.filter(Boolean)));
     } catch (err) {
       console.error('Failed to fetch auctions:', err);
       setAllAuctions([]);
@@ -249,7 +263,7 @@ export default function Auctions() {
                   <div className={`card-status ${active ? 'live' : 'ended'}`}>{active ? 'LIVE' : 'ENDED'}</div>
                 </div>
                 <div className="card-body">
-                  <div className="card-model">{auction.camera_model || 'Camera Listing'}</div>
+                  <div className="card-model">{cameraModels[auction.camera_id] || auction.camera_model || 'Camera Listing'}</div>
                   <div className="card-meta">
                     <div className="meta-row"><span>Auction ID</span><strong>{auction.auction_id}</strong></div>
                     <div className="meta-row"><span>Seller ID</span><strong>{auction.seller_id}</strong></div>
