@@ -7,7 +7,7 @@ Flow:
 2. Fetch auction status & current bid (Auction Service)
 3. Validate bid amount > current_highest_bid and auction is active
 4. Update auction with new highest bid (Auction Service)
-5. Publish bid.outbid (previous bidder) and bid.confirmed (new bidder)
+5. Publish bid.outbid (previous bidder), bid.confirmed (new bidder), and bid.received (seller)
 """
 
 import os
@@ -23,33 +23,7 @@ CORS(app)
 USER_SERVICE = os.environ.get("USER_SERVICE_URL", "http://user:5001")
 AUCTION_SERVICE = os.environ.get("AUCTION_SERVICE_URL", "http://auction:5003")
 RABBITMQ_URL = os.environ.get("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/")
-NOTIFICATION_SERVICE = os.environ.get(
-    "NOTIFICATION_SERVICE_URL",
-    "https://personal-vsev7crp.outsystemscloud.com/Notification/rest/Notification"
-)
-def send_bid_notification(chat_id, auction_id: int, bidder_id: int, bid_amount: float):
-    payload = {
-        "chat_id": chat_id,
-        "auction_id": auction_id,
-        "bidder_id": bidder_id,
-        "bid_amount": bid_amount,
-    }
 
-    print("DEBUG notification URL:", f"{NOTIFICATION_SERVICE}/bid")
-    print("DEBUG notification payload:", payload)
-
-    try:
-        resp = http.post(f"{NOTIFICATION_SERVICE}/bid", json=payload, timeout=5)
-        print("DEBUG notification status:", resp.status_code)
-        print("DEBUG notification response:", resp.text)
-
-        if resp.status_code not in (200, 201, 204):
-            app.logger.warning(
-                f"Notification service returned {resp.status_code}: {resp.text}"
-            )
-    except http.RequestException as exc:
-        print("DEBUG notification exception:", str(exc))
-        app.logger.warning(f"Failed to call notification service: {exc}")
 
 def publish_event(event_type: str, payload: dict):
     try:
@@ -83,6 +57,18 @@ def parse_service_payload(resp, service_name: str):
             jsonify({"error": f"{service_name} returned a non-JSON response"}),
             502,
         )
+
+
+def get_user_display(user: dict, fallback_user_id: int) -> str:
+    name = str(user.get("name") or user.get("Name") or "").strip()
+    if name:
+        return name
+
+    email = str(user.get("email") or user.get("Email") or "").strip()
+    if email:
+        return email
+
+    return f"User #{fallback_user_id}"
 
 
 def get_user(user_id: int):
@@ -232,21 +218,44 @@ def process_bid():
     if previous_bidder_id and previous_bidder_id != bidder_id:
         prev_user, _ = get_user(previous_bidder_id)
         if prev_user and prev_user.get("telegram_chat_id"):
-            send_bid_notification(
-                chat_id=prev_user["telegram_chat_id"],
-                auction_id=auction_id,
-                bidder_id=previous_bidder_id,
-                bid_amount=bid_amount,
+            publish_event(
+                "bid.outbid",
+                {
+                    "auction_id": auction_id,
+                    "outbid_user_id": previous_bidder_id,
+                    "outbid_telegram": prev_user["telegram_chat_id"],
+                    "new_highest_bid": bid_amount,
+                },
             )
 
     # 5b. Confirm new bid
     if bidder.get("telegram_chat_id"):
-        send_bid_notification(
-            chat_id=bidder["telegram_chat_id"],
-            auction_id=auction_id,
-            bidder_id=bidder_id,
-            bid_amount=bid_amount,
+        publish_event(
+            "bid.confirmed",
+            {
+                "auction_id": auction_id,
+                "bidder_id": bidder_id,
+                "bidder_telegram": bidder["telegram_chat_id"],
+                "bid_amount": bid_amount,
+            },
         )
+
+    # 5c. Notify seller about the new bid
+    seller_id = auction.get("seller_id")
+    if seller_id is not None and seller_id != bidder_id:
+        seller, _ = get_user(seller_id)
+        if seller and seller.get("telegram_chat_id"):
+            publish_event(
+                "bid.received",
+                {
+                    "auction_id": auction_id,
+                    "seller_id": seller_id,
+                    "seller_telegram": seller["telegram_chat_id"],
+                    "bid_amount": bid_amount,
+                    "bidder_id": bidder_id,
+                    "bidder_display": get_user_display(bidder, bidder_id),
+                },
+            )
 
     return jsonify(
         {

@@ -291,21 +291,26 @@ def get_price_recommendation(brand, model, shutter_count, condition_score):
     
     try:
         response = requests.post(PRICE_MODEL_URL, json=payload, timeout=5)
-        response.raise_for_status()
-        data = response.json()
-        
-        if data.get("code") == 200:
-            price_data = data.get("data", {})
-            return True, {
-                "suggested_price": price_data.get("suggested_price"),
-                "price_source": price_data.get("price_source"),
-                "number_of_prices_used": price_data.get("number_of_prices_used")
-            }
-        else:
-            return False, None
-    except Exception as e:
+    except requests.RequestException:
         logger.exception("Error calling price service")
-        return False, None
+        return False, None, "Failed to reach price service."
+
+    try:
+        data = response.json()
+    except ValueError:
+        data = {}
+
+    if response.status_code == 200 and data.get("code") == 200:
+        price_data = data.get("data", {})
+        return True, {
+            "suggested_price": price_data.get("suggested_price"),
+            "price_source": price_data.get("price_source"),
+            "number_of_prices_used": price_data.get("number_of_prices_used")
+        }, None
+
+    error_message = data.get("message") or f"Price service returned HTTP {response.status_code}."
+    logger.error("Price service error: HTTP %s - %s", response.status_code, error_message)
+    return False, None, error_message
 
 
 def create_camera_record(camera_payload):
@@ -417,7 +422,7 @@ def process_camera_details():
         }), 400
 
     # 5. Call price recommendation microservice
-    success, pricing_data = get_price_recommendation(
+    success, pricing_data, pricing_error = get_price_recommendation(
         parsed_data['brand'],
         parsed_data['model'],
         parsed_data['shutter_count'],
@@ -425,7 +430,7 @@ def process_camera_details():
     )
     
     if not success:
-        return format_error_response(502, "Failed to get price recommendation.", 502)
+        return format_error_response(502, "Failed to get price recommendation.", 502, errors=[pricing_error])
 
     try:
         seller_id_int = int(seller_id_raw)

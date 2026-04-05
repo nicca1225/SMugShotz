@@ -15,6 +15,7 @@ def create_order_grpc(order_grpc_url, auction_id, buyer_id, seller_id, amount, s
     """
     try:
         with grpc.insecure_channel(order_grpc_url) as channel:
+            grpc.channel_ready_future(channel).result(timeout=5)
             stub = order_pb2_grpc.OrderServiceStub(channel)
             response = stub.CreateOrder(
                 order_pb2.CreateOrderRequest(
@@ -24,7 +25,7 @@ def create_order_grpc(order_grpc_url, auction_id, buyer_id, seller_id, amount, s
                     amount=amount,
                     status=status,
                 ),
-                timeout=5,
+                timeout=10,
             )
             return {"order_id": response.order_id, "amount": response.amount}, None
     except grpc.RpcError as e:

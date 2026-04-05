@@ -191,7 +191,6 @@ services:
     environment:
       USER_SERVICE_URL: https://personal-vsev7crp.outsystemscloud.com/User/rest/User
       AUCTION_SERVICE_URL: https://personal-vsev7crp.outsystemscloud.com/Auction/rest/Auction
-      NOTIFICATION_SERVICE_URL: https://personal-vsev7crp.outsystemscloud.com/Notification/rest/NotificationAPI
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
     depends_on:
       rabbitmq:
