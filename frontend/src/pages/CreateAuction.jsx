@@ -126,7 +126,7 @@ export default function CreateAuction() {
         seller_id:    storedUser.user_id,
         camera_id:    cameraId,
         start_price:  sp,
-        end_time:     endDate,
+        end_time:     endTimeUTC,
         s3_image_url: imageUrl,
         suggested_price: suggestedPrice
       };

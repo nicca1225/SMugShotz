@@ -1,8 +1,10 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
 import os
 
 app = Flask(__name__)
+CORS(app)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
     "DATABASE_URL", "mysql+pymysql://root:root@mysql:3306/orderdb"
 )
@@ -87,6 +89,23 @@ def update_order(order_id):
         order.status = data["status"]
     db.session.commit()
     return jsonify({"message": "Order updated"})
+
+
+@app.route("/order/auction/<int:auction_id>", methods=["GET"])
+def get_order_by_auction(auction_id):
+    order = Order.query.filter_by(auction_id=auction_id).order_by(Order.id.desc()).first()
+    if not order:
+        return jsonify({"error": "Order not found"}), 404
+    return jsonify(
+        {
+            "order_id": order.id,
+            "auction_id": order.auction_id,
+            "buyer_id": order.buyer_id,
+            "seller_id": order.seller_id,
+            "amount": order.amount,
+            "status": order.status,
+        }
+    )
 
 
 @app.route("/order/<int:order_id>", methods=["DELETE"])

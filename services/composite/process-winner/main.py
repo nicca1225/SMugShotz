@@ -20,10 +20,12 @@ import json
 import threading
 import pika
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import requests as http
 from grpc_client import create_order_grpc
 
 app = Flask(__name__)
+CORS(app)
 
 USER_SERVICE = os.environ.get("USER_SERVICE_URL", "http://user:5001")
 AUCTION_SERVICE = os.environ.get("AUCTION_SERVICE_URL", "http://auction:5003")

@@ -9,6 +9,7 @@ import Signup from './pages/Signup.jsx';
 import Profile from './pages/Profile.jsx';
 import PaymentSuccess from './pages/PaymentSuccess.jsx';
 import PaymentCancel from './pages/PaymentCancel.jsx';
+import WonAuction from './pages/WonAuction.jsx';
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/payment/success" element={<PaymentSuccess />} />
         <Route path="/payment/cancel" element={<PaymentCancel />} />
+        <Route path="/payment/won" element={<WonAuction />} />
       </Routes>
     </BrowserRouter>
   );

@@ -51,6 +51,7 @@ export default function AuctionDetail() {
   const [selectedChip, setSelectedChip] = useState(null);
   const [bidFeedback, setBidFeedback] = useState({ text: '', cls: '' });
   const [bidSubmitting, setBidSubmitting] = useState(false);
+  const [showWinnerToast, setShowWinnerToast] = useState(false);
   const intervalRef = useRef(null);
 
   const user = getUser();
@@ -111,6 +112,12 @@ export default function AuctionDetail() {
     loadDetail();
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [loadDetail]);
+
+  useEffect(() => {
+    if (countdown.ended && auction && currentUserId && Number(auction.highest_bidder_id) === currentUserId) {
+      setShowWinnerToast(true);
+    }
+  }, [countdown.ended, auction, currentUserId]);
 
   async function submitBid() {
     if (!auction) return;
@@ -267,6 +274,16 @@ export default function AuctionDetail() {
           .bid-panel { position:static; }
           .specs-grid { grid-template-columns:1fr; }
         }
+        .winner-toast { position:fixed; bottom:32px; left:50%; transform:translateX(-50%); z-index:999; background:#0a1f0f; border:1px solid rgba(48,209,88,.4); border-radius:16px; padding:20px 28px; display:flex; align-items:center; gap:20px; box-shadow:0 8px 40px rgba(0,0,0,.6); min-width:340px; max-width:520px; animation:slideUp .35s ease; }
+        @keyframes slideUp { from { opacity:0; transform:translateX(-50%) translateY(20px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+        .winner-toast-icon { font-size:28px; flex-shrink:0; }
+        .winner-toast-body { flex:1; }
+        .winner-toast-title { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:18px; text-transform:uppercase; color:#30d158; margin-bottom:4px; }
+        .winner-toast-sub { font-size:13px; color:rgba(255,255,255,.6); }
+        .winner-toast-btn { flex-shrink:0; padding:10px 18px; background:#30d158; color:#000; font-size:13px; font-weight:700; border:none; border-radius:50px; cursor:pointer; white-space:nowrap; }
+        .winner-toast-btn:hover { opacity:.88; }
+        .winner-toast-close { position:absolute; top:10px; right:14px; background:none; border:none; color:rgba(255,255,255,.3); font-size:18px; cursor:pointer; line-height:1; }
+        .winner-toast-close:hover { color:rgba(255,255,255,.6); }
       `}</style>
 
       <div className="page-shell">
@@ -387,6 +404,23 @@ export default function AuctionDetail() {
           </>
         )}
       </div>
+
+      {showWinnerToast && auction && (
+        <div className="winner-toast" style={{ position: 'fixed' }}>
+          <button className="winner-toast-close" onClick={() => setShowWinnerToast(false)}>×</button>
+          <div className="winner-toast-icon">🏆</div>
+          <div className="winner-toast-body">
+            <div className="winner-toast-title">You won this auction!</div>
+            <div className="winner-toast-sub">Complete your payment to secure the camera.</div>
+          </div>
+          <button
+            className="winner-toast-btn"
+            onClick={() => navigate(`/payment/won?auction_id=${auction.auction_id}`)}
+          >
+            View Order →
+          </button>
+        </div>
+      )}
     </>
   );
 }

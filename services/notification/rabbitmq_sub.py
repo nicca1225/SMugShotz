@@ -135,21 +135,27 @@ def on_message(ch, method, properties, body):
 
 
 def start():
-    params = pika.URLParameters(RABBITMQ_URL)
-    params.heartbeat = 60
-    conn = pika.BlockingConnection(params)
-    ch = conn.channel()
-    ch.exchange_declare(exchange="digicam", exchange_type="topic", durable=True)
-    result = ch.queue_declare(queue="notification", durable=True)
-    queue_name = result.method.queue
+    import time
+    while True:
+        try:
+            params = pika.URLParameters(RABBITMQ_URL)
+            params.heartbeat = 60
+            conn = pika.BlockingConnection(params)
+            ch = conn.channel()
+            ch.exchange_declare(exchange="digicam", exchange_type="topic", durable=True)
+            result = ch.queue_declare(queue="notification", durable=True)
+            queue_name = result.method.queue
 
-    for key in ROUTING_KEYS:
-        ch.queue_bind(exchange="digicam", queue=queue_name, routing_key=key)
+            for key in ROUTING_KEYS:
+                ch.queue_bind(exchange="digicam", queue=queue_name, routing_key=key)
 
-    ch.basic_qos(prefetch_count=1)
-    ch.basic_consume(queue=queue_name, on_message_callback=on_message)
-    print("[notification] Waiting for messages...")
-    ch.start_consuming()
+            ch.basic_qos(prefetch_count=1)
+            ch.basic_consume(queue=queue_name, on_message_callback=on_message)
+            print("[notification] Waiting for messages...")
+            ch.start_consuming()
+        except Exception as e:
+            print(f"[notification] Connection lost: {e}. Retrying in 5s...")
+            time.sleep(5)
 
 
 if __name__ == "__main__":
