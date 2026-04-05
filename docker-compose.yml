@@ -110,6 +110,9 @@ services:
     build: ./services/atomic/order
     environment:
       DATABASE_URL: mysql+pymysql://root:${MYSQL_ROOT_PASSWORD:-root}@mysql:3306/orderdb
+      PYTHONUNBUFFERED: "1"
+    ports:
+      - "50051:50051"   # gRPC
     depends_on:
       mysql:
         condition: service_healthy
@@ -205,6 +208,7 @@ services:
       USER_SERVICE_URL: https://personal-vsev7crp.outsystemscloud.com/User/rest/User
       AUCTION_SERVICE_URL: https://personal-vsev7crp.outsystemscloud.com/Auction/rest/Auction
       ORDER_SERVICE_URL: http://order:5004
+      ORDER_GRPC_URL: order:50051
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
     depends_on:
       rabbitmq:

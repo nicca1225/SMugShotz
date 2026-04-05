@@ -24,6 +24,12 @@ class Order(db.Model):
 with app.app_context():
     db.create_all()
 
+# Start gRPC server in background thread at startup (not inside __main__ so it runs under any runner)
+import threading
+from grpc_server import serve as grpc_serve
+_grpc_thread = threading.Thread(target=grpc_serve, args=(app, db, Order), daemon=True)
+_grpc_thread.start()
+
 
 @app.route("/order", methods=["POST"])
 def create_order():
@@ -94,4 +100,4 @@ def delete_order(order_id):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5004, debug=True)
+    app.run(host="0.0.0.0", port=5004, debug=False)

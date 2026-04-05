@@ -21,12 +21,14 @@ import threading
 import pika
 from flask import Flask, request, jsonify
 import requests as http
+from grpc_client import create_order_grpc
 
 app = Flask(__name__)
 
 USER_SERVICE = os.environ.get("USER_SERVICE_URL", "http://user:5001")
 AUCTION_SERVICE = os.environ.get("AUCTION_SERVICE_URL", "http://auction:5003")
 ORDER_SERVICE = os.environ.get("ORDER_SERVICE_URL", "http://order:5004")
+ORDER_GRPC_URL = os.environ.get("ORDER_GRPC_URL", "order:50051")
 RABBITMQ_URL = os.environ.get("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/")
 
 
@@ -76,18 +78,17 @@ def process_winner():
     winner = winner_json.get("data", winner_json)
     seller = seller_json.get("data", seller_json)
 
-    # 3. Create pending order
-    order_payload = {
-        "auction_id": auction_id,
-        "buyer_id": winner_id,
-        "seller_id": auction["seller_id"],
-        "amount": auction["current_highest_bid"],
-        "status": "pending",
-    }
-    order_resp = http.post(f"{ORDER_SERVICE}/order", json=order_payload, timeout=5)
-    if order_resp.status_code != 201:
+    # 3. Create pending order via gRPC
+    order, grpc_error = create_order_grpc(
+        ORDER_GRPC_URL,
+        auction_id=auction_id,
+        buyer_id=winner_id,
+        seller_id=auction["seller_id"],
+        amount=auction["current_highest_bid"],
+    )
+    if grpc_error:
+        app.logger.error(f"gRPC order creation failed: {grpc_error}")
         return jsonify({"error": "Failed to create order"}), 500
-    order = order_resp.json()
 
     # 4. Publish winner.notify
     publish_event(
@@ -163,18 +164,17 @@ def handle_auction_expired(auction_id: int):
         winner = (winner_resp.json() if winner_resp.status_code == 200 else {}).get("data", {})
         seller = (seller_resp.json() if seller_resp.status_code == 200 else {}).get("data", {})
 
-        order_payload = {
-            "auction_id": auction_id,
-            "buyer_id": winner_id,
-            "seller_id": auction["seller_id"],
-            "amount": auction["current_highest_bid"],
-            "status": "pending",
-        }
-        order_resp = http.post(f"{ORDER_SERVICE}/order", json=order_payload, timeout=5)
-        if order_resp.status_code != 201:
-            app.logger.error(f"[consumer] Failed to create order for auction #{auction_id}")
+        # Create order via gRPC
+        order, grpc_error = create_order_grpc(
+            ORDER_GRPC_URL,
+            auction_id=auction_id,
+            buyer_id=winner_id,
+            seller_id=auction["seller_id"],
+            amount=auction["current_highest_bid"],
+        )
+        if grpc_error:
+            app.logger.error(f"[consumer] gRPC order creation failed for auction #{auction_id}: {grpc_error}")
             return
-        order = order_resp.json()
 
         publish_event(
             "winner.notify",
