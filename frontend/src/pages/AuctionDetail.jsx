@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getUser } from '../utils/auth.js';
 
-const AUCTIONS_API_URL = 'https://personal-vsev7crp.outsystemscloud.com/Auction/rest/Auction';
+const AUCTIONS_API_URL = 'https://personal-vsev7crp.outsystemscloud.com/Auction/rest/Auction/all';
 const CAMERA_SERVICE_URL = 'http://localhost/camera';
 
 function getBidApiUrl() {

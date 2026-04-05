@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { getUser, setUser as storeUser } from '../utils/auth.js';
 
 const USER_API = 'https://personal-vsev7crp.outsystemscloud.com/User/rest/User/user/';
-const AUCTIONS_API = 'https://personal-vsev7crp.outsystemscloud.com/Auction/rest/Auction';
+const AUCTIONS_API = 'https://personal-vsev7crp.outsystemscloud.com/Auction/rest/Auction/all';
 const BOT_USERNAME = 'Smugshotz_bot';
 
 function timeRemaining(endTime) {
