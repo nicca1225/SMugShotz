@@ -129,8 +129,35 @@ def handle_winner_notify(payload: dict):
 
 def handle_auction_failed(payload: dict):
     reason = payload.get("reason", "unknown")
-    # In a full implementation, we'd look up all bidder telegrams here
-    logger.warning("auction.failed received: auction_id=%s reason=%s payload=%s", payload.get("auction_id"), reason, payload)
+    auction_id = payload.get("auction_id")
+    seller_telegram = payload.get("seller_telegram")
+    winner_telegram = payload.get("winner_telegram")
+
+    logger.info("auction.failed received: auction_id=%s reason=%s", auction_id, reason)
+
+    if reason == "no_bids":
+        if seller_telegram:
+            send_and_log(
+                seller_telegram,
+                f"Your auction #{auction_id} has ended with no bids. Consider relisting at a lower starting price.",
+                "auction.failed",
+                "seller",
+            )
+    elif reason == "payment_failed":
+        if seller_telegram:
+            send_and_log(
+                seller_telegram,
+                f"Payment for your auction #{auction_id} has failed. The auction has been marked as failed.",
+                "auction.failed",
+                "seller",
+            )
+        if winner_telegram:
+            send_and_log(
+                winner_telegram,
+                f"Your payment for auction #{auction_id} could not be processed. The auction has been cancelled.",
+                "auction.failed",
+                "winner",
+            )
 
 
 def handle_order_confirmed(payload: dict):

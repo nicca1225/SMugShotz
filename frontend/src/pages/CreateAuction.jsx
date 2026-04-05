@@ -35,6 +35,7 @@ export default function CreateAuction() {
   // Step 2 fields
   const [startPrice, setStartPrice] = useState('');
   const [endDate, setEndDate] = useState(defaultEndDate());
+  const [listingTitle, setListingTitle] = useState('');
 
   // Result states
   const [successAuctionId, setSuccessAuctionId] = useState(null);
@@ -87,7 +88,7 @@ export default function CreateAuction() {
         price: price ? price.toFixed(2) : null,
         imageUrl: result.images?.[0]?.storage?.image_url
       });
-
+      setListingTitle(`${brand} ${model}`);
       setStep(2);
     } catch (err) {
       alert('Analysis failed: ' + err.message);
@@ -143,6 +144,16 @@ export default function CreateAuction() {
       }
 
       const auctionId = aucData.auction_id || aucData?.data?.auction_id || cameraId;
+
+      // Save custom listing title to camera service
+      if (listingTitle.trim()) {
+        await fetch(`http://localhost/camera/${cameraId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: listingTitle.trim() })
+        }).catch(() => {});
+      }
+
       setSuccessAuctionId(auctionId);
     } catch (err) {
       setErrorMsg(err.message || 'Something went wrong. Please try again.');
@@ -331,6 +342,18 @@ export default function CreateAuction() {
                       </div>
 
                       <span className="form-section-label" style={{ marginTop: '8px' }}>Auction Details</span>
+                      <div className="field-group">
+                        <label className="field-label" htmlFor="listingTitle">Listing Title</label>
+                        <input
+                          className="field-input"
+                          type="text"
+                          id="listingTitle"
+                          placeholder="e.g. Sony A6400 Mirrorless"
+                          value={listingTitle}
+                          onChange={e => setListingTitle(e.target.value)}
+                        />
+                        <div className="field-help">Pre-filled from brand and model. You can customise this.</div>
+                      </div>
                       <div className="user-chip">
                         <span>Logged In User</span>
                         <strong>{storedUser.user_id}</strong>
@@ -343,7 +366,7 @@ export default function CreateAuction() {
                           <div className="state-id"><span>Auction ID</span><strong>{successAuctionId}</strong></div>
                           <div className="state-actions">
                             <Link to="/auctions" className="btn-submit" style={{ width: 'auto', padding: '10px 20px', marginTop: 0 }}>View Auctions</Link>
-                            <button className="btn-link" onClick={() => { setStep(1); setAnalysisResult(null); setSidebarSummary(null); setSuccessAuctionId(null); setErrorMsg(''); setBrand(''); setModel(''); setShutterCount(''); setImageFile(null); setPreviewUrl(''); }}>Create Another</button>
+                            <button className="btn-link" onClick={() => { setStep(1); setAnalysisResult(null); setSidebarSummary(null); setSuccessAuctionId(null); setErrorMsg(''); setBrand(''); setModel(''); setShutterCount(''); setImageFile(null); setPreviewUrl(''); setListingTitle(''); }}>Create Another</button>
                           </div>
                         </div>
                       ) : (

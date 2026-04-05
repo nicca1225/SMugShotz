@@ -139,21 +139,26 @@ def process_winner():
     auction = auc_json.get("data", auc_json)
 
     winner_id = auction.get("highest_bidder_id")
+
+    # 2. Get winner and seller info (needed for both success and no-bids failure)
+    winner_resp = http.get(f"{USER_SERVICE}/user/{winner_id}", timeout=5) if winner_id else None
+    seller_resp = http.get(f"{USER_SERVICE}/user/{auction['seller_id']}", timeout=5)
+    winner_json = (winner_resp.json() if winner_resp and winner_resp.status_code == 200 else {})
+    seller_json = seller_resp.json() if seller_resp.status_code == 200 else {}
+    winner = winner_json.get("data", winner_json)
+    seller = seller_json.get("data", seller_json)
+
     if not winner_id:
         # No bids — mark failed
         updated, update_error = update_auction_status(auction, "FAILED")
         if not updated:
             app.logger.error("Failed to mark auction #%s as FAILED: %s", auction_id, update_error)
-        publish_event("auction.failed", {"auction_id": auction_id, "reason": "no_bids"})
+        publish_event("auction.failed", {
+            "auction_id": auction_id,
+            "reason": "no_bids",
+            "seller_telegram": seller.get("telegram_chat_id"),
+        })
         return jsonify({"message": "Auction ended with no bids"}), 200
-
-    # 2. Get winner and seller info
-    winner_resp = http.get(f"{USER_SERVICE}/user/{winner_id}", timeout=5)
-    seller_resp = http.get(f"{USER_SERVICE}/user/{auction['seller_id']}", timeout=5)
-    winner_json = winner_resp.json() if winner_resp.status_code == 200 else {}
-    seller_json = seller_resp.json() if seller_resp.status_code == 200 else {}
-    winner = winner_json.get("data", winner_json)
-    seller = seller_json.get("data", seller_json)
 
     # 3. Create pending order via gRPC
     order, order_error = create_order(
@@ -200,7 +205,9 @@ def rollback():
     # Delete order
     http.delete(f"{ORDER_SERVICE}/order/{order_id}", timeout=5)
 
-    # Mark auction failed
+    # Mark auction failed and get contact info for notifications
+    seller_telegram = None
+    winner_telegram = None
     auction_resp = http.get(f"{AUCTION_SERVICE}/auction/{auction_id}", timeout=5)
     if auction_resp.status_code == 200:
         auction_json = auction_resp.json()
@@ -208,6 +215,17 @@ def rollback():
         updated, update_error = update_auction_status(auction, "FAILED")
         if not updated:
             app.logger.error("Failed to mark auction #%s as FAILED during rollback: %s", auction_id, update_error)
+        # Fetch seller and winner contact info
+        seller_resp = http.get(f"{USER_SERVICE}/user/{auction.get('seller_id')}", timeout=5)
+        if seller_resp.status_code == 200:
+            seller = seller_resp.json().get("data", seller_resp.json())
+            seller_telegram = seller.get("telegram_chat_id")
+        winner_id = auction.get("highest_bidder_id")
+        if winner_id:
+            winner_resp = http.get(f"{USER_SERVICE}/user/{winner_id}", timeout=5)
+            if winner_resp.status_code == 200:
+                winner = winner_resp.json().get("data", winner_resp.json())
+                winner_telegram = winner.get("telegram_chat_id")
     else:
         app.logger.error("Failed to fetch auction #%s for rollback status update: HTTP %s", auction_id, auction_resp.status_code)
 
@@ -218,6 +236,8 @@ def rollback():
             "auction_id": auction_id,
             "order_id": order_id,
             "reason": data.get("reason", "payment_failed"),
+            "seller_telegram": seller_telegram,
+            "winner_telegram": winner_telegram,
         },
     )
 
@@ -237,18 +257,24 @@ def handle_auction_expired(auction_id: int):
         auction = auc_json.get("data", auc_json)
 
         winner_id = auction.get("highest_bidder_id")
+
+        seller_resp = http.get(f"{USER_SERVICE}/user/{auction['seller_id']}", timeout=5)
+        seller = (seller_resp.json() if seller_resp.status_code == 200 else {}).get("data", {})
+
         if not winner_id:
             updated, update_error = update_auction_status(auction, "FAILED")
             if not updated:
                 app.logger.error("[consumer] Failed to mark auction #%s as FAILED: %s", auction_id, update_error)
-            publish_event("auction.failed", {"auction_id": auction_id, "reason": "no_bids"})
+            publish_event("auction.failed", {
+                "auction_id": auction_id,
+                "reason": "no_bids",
+                "seller_telegram": seller.get("telegram_chat_id"),
+            })
             app.logger.info(f"[consumer] Auction #{auction_id} ended with no bids")
             return
 
         winner_resp = http.get(f"{USER_SERVICE}/user/{winner_id}", timeout=5)
-        seller_resp = http.get(f"{USER_SERVICE}/user/{auction['seller_id']}", timeout=5)
         winner = (winner_resp.json() if winner_resp.status_code == 200 else {}).get("data", {})
-        seller = (seller_resp.json() if seller_resp.status_code == 200 else {}).get("data", {})
 
         # Create order via gRPC
         order, order_error = create_order(
